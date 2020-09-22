@@ -1,0 +1,196 @@
+/* Basic properties */
+
+html {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#joypad {
+    display: none;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100vw;
+    height: 100vh;
+    color: #FFF;
+    background-color: transparent;
+}
+
+#warning, #calibration {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    border-radius: 10px;
+    padding: 3vh 3vw 3vh;
+    filter: drop-shadow(0px 0px 5px black)
+}
+
+#warning {
+    background: #F0B080;
+    width: 64vw;
+    height: 44vh;
+    top: 25vh;
+    left: 18vw;
+}
+
+#calibration {
+    background: #B0B0B0;
+    width: 80vw;
+    height: 74vh;
+    top: 6vw;
+    left: 7vw;
+}
+
+#force {
+    position: absolute;
+    background: #008000;
+    width: 70vw;
+    height: 11px;
+    transform-origin: left;
+}
+
+#calibrationOk, #calibrationNo { width: 48%; padding: 4vh 0vh 4vh; }
+
+#menu {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-evenly;
+}
+
+#menu > * {
+    flex: 1 1 auto;
+    background: #cccccc;
+    border-radius: 10px;
+    margin: 3px;
+    padding-top: 30vh;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.dismiss {
+    margin-top: 5vh;
+    font-size: 80%;
+}
+
+#dbg {
+    vertical-align: middle;
+    overflow: hidden;
+    background: #000;
+    color: #0f0;
+    font-family: monospace;
+    word-wrap: break-word;
+    z-index: 2;
+}
+
+div {
+    background-size: 100% 100%;
+}
+
+.control { z-index: 2; }
+
+/* Joysticks */
+.joystick {
+    background-image: url("img/joystick.svg");
+    background-color: #bbb;
+}
+.circle {
+    background-color: black;
+    width: 10px;
+    height: 10px;
+    border-radius: 100%;
+    z-index: 2;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+}
+
+/* Buttons */
+.analogbutton { background-color: #ccc; z-index: 1; }
+.button { background-color: #bbb; z-index: 1; }
+.pressed { filter: brightness(70%); }
+.buttonhitbox {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    height: 1px;
+    width: 1px;
+    transform-origin: top left;
+    opacity: 0;
+}
+/* seq 1 16 | xargs -I xx echo "#bxx { background-image: url('img/bxx.svg'); }" */
+/* Some edits done by hand */
+#b1 { background-image: url('img/b1.svg'); background-color: #00d; }
+#b2 { background-image: url('img/b2.svg'); background-color: #e00; }
+#b3 { background-image: url('img/b3.svg'); background-color: #dd0; }
+#b4 { background-image: url('img/b4.svg'); background-color: #0d0; }
+#b5 { background-image: url('img/b5.svg'); }
+#b6 { background-image: url('img/b6.svg'); }
+#b7 { background-image: url('img/b7.svg'); }
+#b8 { background-image: url('img/b8.svg'); }
+#b9 { background-image: url('img/b9.svg'); }
+#b10 { background-image: url('img/b10.svg'); }
+#b11 { background-image: url('img/b11.svg'); }
+#b12 { background-image: url('img/b12.svg'); }
+#b13 { background-image: url('img/b13.svg'); }
+#b14 { background-image: url('img/b14.svg'); }
+#b15 { background-image: url('img/b15.svg'); }
+#b16 { background-image: url('img/b16.svg'); }
+#bg { background-image: url('img/bg.svg'); background-color: #444; }
+#bs { background-image: url('img/bs.svg'); background-color: #444; }
+#bm { background-image: url('img/bm.svg'); background-color: #444; }
+
+/* D-pad */
+#dp { background-image: url('img/dp.svg'); }
+
+/* Analog buttons */
+#a1 { background-image: url('img/a1.svg'); background-color: #66f; }
+#a2 { background-image: url('img/a2.svg'); background-color: #f33; }
+#a3 { background-image: url('img/a3.svg'); background-color: #ff2; }
+#a4 { background-image: url('img/a4.svg'); background-color: #2f2; }
+#a5 { background-image: url('img/a5.svg'); }
+#a6 { background-image: url('img/a6.svg'); }
+#a7 { background-image: url('img/a7.svg'); }
+#a8 { background-image: url('img/a8.svg'); }
+#a9 { background-image: url('img/a9.svg'); }
+#a10 { background-image: url('img/a10.svg'); }
+#a11 { background-image: url('img/a11.svg'); }
+#a12 { background-image: url('img/a12.svg'); }
+#a13 { background-image: url('img/a13.svg'); }
+#a14 { background-image: url('img/a14.svg'); }
+#a15 { background-image: url('img/a15.svg'); }
+#a16 { background-image: url('img/a16.svg'); }
+
+/* Motion controls */
+.motion { background-color: #ddd; }
+.motiontrinket { width: 100%; height: 100%; background-image: url('img/motiontrinket.svg'); }
+
+/* Pedals */
+.pedal { background-color: #333; }
+
+/* Knobs */
+.knob { }
+.knobcircle {
+    position: absolute;
+    border-radius: 100%;
+    transform: rotate(0);
+    background-color: #888;
+}
+
+.knobcircle > .circle {
+    position: absolute;
+    top: 50%;
+    left: 90%;
+    transform: translate(-50%, -50%);
+}
+
