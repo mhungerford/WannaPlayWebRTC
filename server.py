@@ -11,13 +11,75 @@ from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription, MediaStreamTrack, VideoStreamTrack
 from aiortc.contrib.media import MediaPlayer
 
+import numpy as np
 import cv2
 from av import VideoFrame
 
+from mss import mss #fast screen-shots
+from mss import tools as msstools
+
+from sys import platform
+
+win_x = 0
+win_y = 0
+win_w = 0
+win_h = 0
+
+if platform == "linux":
+  try:
+    import Xlib.display
+    disp = Xlib.display.Display()
+    root = disp.screen().root
+    #some windows are nested, like SDL games
+    #so use recursion to find all windows
+    def findWindow(win, name):
+      if win.get_wm_name() == name:
+        return win
+      children = win.query_tree().children
+      for awin in children:
+        thewin = findWindow(awin, name)
+        if thewin != None:
+          return thewin
+
+    mywin = findWindow(root, 'PICO-8')
+    if mywin != None:
+      print("Found: " + mywin.get_wm_name())
+      geometry = mywin.get_geometry()
+      abs_coords = root.translate_coords(mywin, 0, 0)
+      win_x = abs_coords.x
+      win_y = abs_coords.y
+      win_w = geometry.width
+      win_h = geometry.height
+      print("geometry {},{} {}x{}".format(x,y,w,h))
+  except:
+    pass
+else:
+  import pygetwindow as getwindow
+  gamewindow = getwindow('pico8')[0]
+  win_x = gamewindow.top
+  win_y = gamewindow.left
+  win_w, win_h = gamewindow.size
+
+
+
 ROOT = os.path.dirname(__file__)
+#PHOTO_PATH = os.path.join("/tmp/", "screenshot.png")
 
 
 pcs = set()
+sct = mss()
+sct.compression_level = 0 # disable screenshot compression (for performance)
+
+raw_image = []
+
+def capture_screenshot():
+  # The screen part to capture
+  monitor = {"top": win_y, "left": win_x, "width": win_w, "height": win_h}
+  # Grab the data
+  sct_img = sct.grab(monitor)
+  # Save to the picture file
+  msstools.to_png(sct_img.rgb, sct_img.size, output="/tmp/screenshot.png")  
+  #raw_image = np.array(sct_img)
 
 
 class VideoImageTrack(VideoStreamTrack):
@@ -29,15 +91,14 @@ class VideoImageTrack(VideoStreamTrack):
 
     def __init__(self):
         super().__init__()  # don't forget this!
-        self.idx = 0
 
     async def recv(self):
         pts, time_base = await self.next_timestamp()
 
         # rotate image
-        PHOTO_PATH = os.path.join(ROOT, "pics/sonic-{:03d}.png".format(self.idx))
-        img = cv2.imread(PHOTO_PATH, cv2.IMREAD_COLOR)
-        self.idx = (self.idx + 1) % 200
+        capture_screenshot()
+        #img = raw_image
+        img = cv2.imread("/tmp/screenshot.png", cv2.IMREAD_COLOR)
 
         # create video frame
         frame = VideoFrame.from_ndarray(img, format="bgr24")
