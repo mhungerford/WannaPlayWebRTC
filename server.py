@@ -20,45 +20,43 @@ from mss import tools as msstools
 
 from sys import platform
 
-win_x = 0
-win_y = 0
-win_w = 0
-win_h = 0
+def get_window_pos(window_name):
+  if platform == "linux":
+    try:
+      import Xlib.display
+      disp = Xlib.display.Display()
+      root = disp.screen().root
+      #some windows are nested, like SDL games
+      #so use recursion to find all windows
+      def findWindow(win, name):
+        if win.get_wm_name() == name:
+          return win
+        children = win.query_tree().children
+        for awin in children:
+          thewin = findWindow(awin, name)
+          if thewin != None:
+            return thewin
 
-if platform == "linux":
-  try:
-    import Xlib.display
-    disp = Xlib.display.Display()
-    root = disp.screen().root
-    #some windows are nested, like SDL games
-    #so use recursion to find all windows
-    def findWindow(win, name):
-      if win.get_wm_name() == name:
-        return win
-      children = win.query_tree().children
-      for awin in children:
-        thewin = findWindow(awin, name)
-        if thewin != None:
-          return thewin
-
-    mywin = findWindow(root, 'PICO-8')
-    if mywin != None:
-      print("Found: " + mywin.get_wm_name())
-      geometry = mywin.get_geometry()
-      abs_coords = root.translate_coords(mywin, 0, 0)
-      win_x = abs_coords.x
-      win_y = abs_coords.y
-      win_w = geometry.width
-      win_h = geometry.height
-      print("geometry {},{} {}x{}".format(x,y,w,h))
-  except:
-    pass
-else:
-  import pygetwindow as getwindow
-  gamewindow = getwindow('pico8')[0]
-  win_x = gamewindow.top
-  win_y = gamewindow.left
-  win_w, win_h = gamewindow.size
+      mywin = findWindow(root, window_name)
+      if mywin != None:
+        print("Found: " + mywin.get_wm_name())
+        geometry = mywin.get_geometry()
+        abs_coords = root.translate_coords(mywin, 0, 0)
+        x = abs_coords.x
+        y = abs_coords.y
+        w = geometry.width
+        h = geometry.height
+        print("geometry {},{} {}x{}".format(x,y,w,h))
+        return (x, y, w, h)
+    except:
+      return(0, 0, 128, 128)
+  else:
+    import pygetwindow as getwindow
+    gamewindow = getwindow(window_name)[0]
+    x = gamewindow.top
+    y = gamewindow.left
+    w, h = gamewindow.size
+    return (x, y, w, h)
 
 
 
@@ -70,7 +68,9 @@ pcs = set()
 sct = mss()
 sct.compression_level = 0 # disable screenshot compression (for performance)
 
-raw_image = []
+raw_image = None
+
+win_x, win_y, win_w, win_h = get_window_pos('PICO-8')
 
 def capture_screenshot():
   # The screen part to capture
@@ -78,8 +78,9 @@ def capture_screenshot():
   # Grab the data
   sct_img = sct.grab(monitor)
   # Save to the picture file
-  msstools.to_png(sct_img.rgb, sct_img.size, output="/tmp/screenshot.png")  
-  #raw_image = np.array(sct_img)
+  #msstools.to_png(sct_img.rgb, sct_img.size, output="/tmp/screenshot.png")  
+  global raw_image #use global so we can reuse frames from process thread
+  raw_image = np.array(sct_img)
 
 
 class VideoImageTrack(VideoStreamTrack):
@@ -97,11 +98,11 @@ class VideoImageTrack(VideoStreamTrack):
 
         # rotate image
         capture_screenshot()
-        #img = raw_image
-        img = cv2.imread("/tmp/screenshot.png", cv2.IMREAD_COLOR)
+        #img = cv2.imread("/tmp/screenshot.png", cv2.IMREAD_COLOR)
 
         # create video frame
-        frame = VideoFrame.from_ndarray(img, format="bgr24")
+        #frame = VideoFrame.from_ndarray(img, format="bgr24")
+        frame = VideoFrame.from_ndarray(raw_image, format="bgra")
         frame.pts = pts
         frame.time_base = time_base
 
