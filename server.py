@@ -5,6 +5,7 @@ import logging
 import os
 import platform
 import ssl
+from sys import platform
 
 from aiohttp import web
 
@@ -18,10 +19,30 @@ from av import VideoFrame
 from mss import mss #fast screen-shots
 from mss import tools as msstools
 
-from sys import platform
+#local dependencies
+import yoke
+
+#yoke.EVENTS.BTN_START, 
+events = [(1, 304), (1, 305), (1, 308), (1, 307), (1, 310), (1, 311), (1, 314), (1, 315), (1, 544), (1, 546), (1, 545), (1, 547)]
+#don't use numbers in Yoke name
+js1 = yoke.Device(1, 'Yoke', events)
+
+
+def test_jsupdate_down():
+  for e in range(0, len(events)):
+    js1.emit(events[e], 0)
+  js1.emit(yoke.EVENTS.BTN_START, 1)
+  js1.flush()
+
+def test_jsupdate_up():
+  for e in range(0, len(events)):
+    js1.emit(events[e], 0)
+  #js1.emit((1, 315), 0) #yoke.EVENTS.BTN_START, 0)
+  js1.flush()
 
 def get_window_pos(window_name):
   if platform == "linux":
+    x, y, w, h = (0,0,128,128)
     try:
       import Xlib.display
       disp = Xlib.display.Display()
@@ -47,9 +68,11 @@ def get_window_pos(window_name):
         w = geometry.width
         h = geometry.height
         print("geometry {},{} {}x{}".format(x,y,w,h))
-        return (x, y, w, h)
+      else:
+        print("Error: Window {} not found".format(window_name))
     except:
-      return(0, 0, 128, 128)
+      pass
+    return (x, y, w, h)
   else:
     import pygetwindow as getwindow
     gamewindow = getwindow(window_name)[0]
@@ -105,7 +128,7 @@ class VideoImageTrack(VideoStreamTrack):
         frame = VideoFrame.from_ndarray(raw_image, format="bgra")
         frame.pts = pts
         frame.time_base = time_base
-
+        
         return frame
 
 
