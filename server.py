@@ -5,6 +5,7 @@ import logging
 import os
 import platform
 import ssl
+import sys, traceback
 from sys import platform
 
 from aiohttp import web
@@ -37,41 +38,61 @@ def test_jsupdate_down():
 def test_jsupdate_up():
   for e in range(0, len(events)):
     js1.emit(events[e], 0)
-  #js1.emit((1, 315), 0) #yoke.EVENTS.BTN_START, 0)
   js1.flush()
 
 def get_window_pos(window_name):
+  print("Looking for window: {}".format(window_name))
   if platform == "linux":
     x, y, w, h = (0,0,128,128)
     try:
       import Xlib.display
       disp = Xlib.display.Display()
       root = disp.screen().root
-      #some windows are nested, like SDL games
-      #so use recursion to find all windows
-      def findWindow(win, name):
-        if win.get_wm_name() == name:
-          return win
-        children = win.query_tree().children
-        for awin in children:
-          thewin = findWindow(awin, name)
-          if thewin != None:
-            return thewin
 
-      mywin = findWindow(root, window_name)
-      if mywin != None:
-        print("Found: " + mywin.get_wm_name())
-        geometry = mywin.get_geometry()
-        abs_coords = root.translate_coords(mywin, 0, 0)
-        x = abs_coords.x
-        y = abs_coords.y
-        w = geometry.width
-        h = geometry.height
+      def sendEvent(window, ctype, data, mask=None):
+        """ Send a ClientMessage event to the root """
+        if not window: window = self.root
+        if type(data) is str:
+          dataSize = 8
+        else:
+          data = (data+[0]*(5-len(data)))[:5]
+          dataSize = 32
+        ev = Xlib.protocol.event.ClientMessage(window=window, client_type=ctype, data=(dataSize,(data)))
+        if not mask:
+          mask = (Xlib.X.SubstructureRedirectMask|Xlib.X.SubstructureNotifyMask)
+        root.send_event(ev, event_mask=mask)
+
+      def raiseWindow(window, window_id):
+        #newer focus command to root window
+        sendEvent(window, disp.intern_atom('_NET_ACTIVE_WINDOW'), [window_id]) 
+
+      def findWindow(window_name):
+        window_ids = root.get_full_property(disp.intern_atom('_NET_CLIENT_LIST'), Xlib.X.AnyPropertyType).value
+        for window_id in window_ids:
+          window = disp.create_resource_object('window', window_id)
+          #cannot use get_wm_name, as it errors on certain windows (firefox)
+          prop = window.get_full_property(disp.intern_atom('_NET_WM_NAME'), 0)
+          wm_name = getattr(prop, 'value', '')
+          if wm_name == window_name:
+            return (window, window_id)
+
+      def getWindowGeometry(window):
+        geometry = window.get_geometry()
+        abs_coords = root.translate_coords(window, 0, 0)
+        return (abs_coords.x, abs_coords.y, geometry.width, geometry.height)
+
+      (window, window_id) = findWindow(window_name)
+      if window != None:
+        print("Found window_id: {}".format(window_id))
+        raiseWindow(window, window_id)
+        (x, y, w, h) = getWindowGeometry(window)
         print("geometry {},{} {}x{}".format(x,y,w,h))
       else:
         print("Error: Window {} not found".format(window_name))
     except:
-      pass
+      print("XLIB error {}".format(sys.exc_info()[0]))
+      print("XLIB line: {}".format(sys.exc_info()[2].tb_lineno))
+      print(traceback.format_exc())
     return (x, y, w, h)
   else:
     import pygetwindow as getwindow
