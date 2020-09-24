@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" type="text/css" href="base.css" />
 
-    <title>WebRTC webcam</title>
+    <title>Web4Player</title>
     <style>
     button {
         position: absolute;
@@ -68,8 +68,9 @@
 
 <button id="start" onclick="document.getElementById('mjpeg').src='http://192.168.1.126:8100/?action=snapshot';loadPad('dpad.css');start()">Request Turn</button>
 <button id="stop" style="display: none" onclick="stop()">Stop</button>
-<div>
 <button id="fullscreen" onclick="toggleFullScreen()">FullScreen</button>
+<div>
+<button id="play" onclick="addVideo();">Start</button>
 </div>
 
 <div id="media">

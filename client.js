@@ -1,33 +1,45 @@
-var peer = null;
+var pc = null;
 
 // data channel
 var dc = null, dcInterval = null;
 
+var vc = null;
+
+var uuid = uuidv4();
+
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+
 function negotiate() {
-    peer.addTransceiver('video', {direction: 'recvonly'});
-    return peer.createOffer().then(function(offer) {
-        return peer.setLocalDescription(offer);
+    return pc.createOffer().then(function(offer) {
+        return pc.setLocalDescription(offer);
     }).then(function() {
         // wait for ICE gathering to complete
         return new Promise(function(resolve) {
-            if (peer.iceGatheringState === 'complete') {
+            if (pc.iceGatheringState === 'complete') {
                 resolve();
             } else {
                 function checkState() {
-                    if (peer.iceGatheringState === 'complete') {
-                        peer.removeEventListener('icegatheringstatechange', checkState);
+                    if (pc.iceGatheringState === 'complete') {
+                        pc.removeEventListener('icegatheringstatechange', checkState);
                         resolve();
                     }
                 }
-                peer.addEventListener('icegatheringstatechange', checkState);
+                pc.addEventListener('icegatheringstatechange', checkState);
             }
         });
     }).then(function() {
-        var offer = peer.localDescription;
+        var offer = pc.localDescription;
         return fetch('/offer', {
             body: JSON.stringify({
                 sdp: offer.sdp,
                 type: offer.type,
+                uuid: uuid
             }),
             headers: {
                 'Content-Type': 'application/json'
@@ -37,10 +49,18 @@ function negotiate() {
     }).then(function(response) {
         return response.json();
     }).then(function(answer) {
-        return peer.setRemoteDescription(answer);
+        return pc.setRemoteDescription(answer);
     }).catch(function(e) {
         alert(e);
     });
+}
+
+function addVideo() {
+   if (vc == null) {
+     vc = pc.addTransceiver('video', {direction: 'recvonly'});
+     negotiate(true);
+      console.log("Add Video")
+   }
 }
 
 function start() {
@@ -52,10 +72,10 @@ function start() {
         config.iceServers = [{urls: ['stun:stun.l.google.com:19302']}];
     }
 
-    peer = new RTCPeerConnection(config);
+    pc = new RTCPeerConnection(config);
 
     // Create Data Channel
-   dc = peer.createDataChannel('chat', {"ordered": false, "maxRetransmits": 0});
+   dc = pc.createDataChannel('chat', {"ordered": false, "maxRetransmits": 0});
    dc.onclose = function() {
       clearInterval(dcInterval);
    };
@@ -66,13 +86,16 @@ function start() {
       }, 1000);
    };
    dc.onmessage = function(evt) {
+      console.log("Data channel reply: " + evt.data)
 
       if (evt.data.substring(0, 4) === 'pong') {
       }
    };
 
+
+
     // connect audio / video
-    peer.addEventListener('track', function(evt) {
+    pc.addEventListener('track', function(evt) {
         if (evt.track.kind == 'video') {
             console.log("Adding track" + evt.track.kind);
             document.getElementById('video').srcObject = evt.streams[0];
@@ -81,16 +104,37 @@ function start() {
         }
     });
 
-    document.getElementById('start').style.display = 'none';
+
+   //pc.onnegotiationneeded = function() {
+   //   negotiate();
+   //}
+
+
     negotiate();
-    document.getElementById('stop').style.display = 'inline-block';
+
+    //document.getElementById('start').style.display = 'none';
+    //document.getElementById('stop').style.display = 'inline-block';
 }
 
 function stop() {
-    document.getElementById('stop').style.display = 'none';
+    //document.getElementById('stop').style.display = 'none';
+
+    // close data channel
+    if (dc) {
+        dc.close();
+    }
+
+    // close transceivers
+    if (pc.getTransceivers) {
+        pc.getTransceivers().forEach(function(transceiver) {
+            if (transceiver.stop) {
+                transceiver.stop();
+            }
+        });
+    }
 
     // close peer connection
     setTimeout(function() {
-        peer.close();
+        pc.close();
     }, 500);
 }

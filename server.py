@@ -26,8 +26,8 @@ import yoke
 #Note: Don't forget to sdl_controller map these
 #yoke.EVENTS.BTN_START, 
 events = [
+    yoke.EVENTS.BTN_SOUTH,
     yoke.EVENTS.BTN_EAST,
-    yoke.EVENTS.BTN_NORTH,
     yoke.EVENTS.BTN_DPAD_UP,
     yoke.EVENTS.BTN_DPAD_LEFT,
     yoke.EVENTS.BTN_DPAD_DOWN,
@@ -35,11 +35,14 @@ events = [
     ]
 #don't use numbers in Yoke name
 js1 = yoke.Device(1, 'Yoke', events)
+js2 = yoke.Device(2, 'Yoke', events)
+js3 = yoke.Device(3, 'Yoke', events)
+js4 = yoke.Device(4, 'Yoke', events)
 
-def jsupdate_vals(vals):
+def jsupdate_vals(js, vals):
   for e in range(0, len(vals)):
-    js1.emit(events[e], int(vals[e]))
-  js1.flush()
+    js.emit(events[e], int(vals[e]))
+  js.flush()
 
 def get_window_pos(window_name):
   print("Looking for window: {}".format(window_name))
@@ -127,6 +130,8 @@ def capture_screenshot():
   global raw_image #use global so we can reuse frames from process thread
   raw_image = np.array(sct_img)
 
+class BogusStreamTrack(VideoStreamTrack):
+    kind = "video"
 
 class VideoImageTrack(VideoStreamTrack):
     """
@@ -180,34 +185,79 @@ async def dpadcss(request):
 async def offer(request):
     params = await request.json()
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
+    uuid = str(params["uuid"])
 
-    pc = RTCPeerConnection()
-    pcs.append(pc)
+    pc = next((x for x in pcs if x.uuid == uuid), None)
 
-    @pc.on("datachannel")
-    def on_datachannel(channel):
-        @channel.on("message")
-        def on_message(message):
-            if isinstance(message, str) and message.startswith("ping"):
-                channel.send("pong" + message[4:])
-                print("Channel id: {}".format(channel.id))
-                print(message)
-            elif isinstance(message, str) and message.startswith("controller: "):
-                vals = message[12:].split(',')
-                jsupdate_vals(vals)
+    if pc is None:
+      pc = RTCPeerConnection()
+      setattr(pc, 'uuid',uuid)
+      pcs.append(pc)
+      if pcs.index(pc) == 0:
+        print("adding JS1")
+        setattr(pc, 'js', js1)
+      else:
+        setattr(pc, 'js', js2)
+        print("adding JS2")
+      #print("pc uuid is {}".format(pc.uuid))
+      #print("pc uuid is {}".format(getattr(pc, 'uuid'))
+    
+      #@pc.on("track")
+      #def on_track(track):
+      #  pc.addTrack(VideoImageTrack(track))
+      #pc.addTrack(VideoImageTrack())
 
-    @pc.on("iceconnectionstatechange")
-    async def on_iceconnectionstatechange():
-        print("ICE connection state is %s" % pc.iceConnectionState)
-        if pc.iceConnectionState == "failed":
+      @pc.on("datachannel")
+      def on_datachannel(channel):
+          print("Channel id: {}".format(channel.id))
+          #print("queue position: {}".format(pcs.index(pc)))
+
+          @channel.on("close")
+          def on_close():
+            print("Close Channel id: {}".format(channel.id))
+            #print("Close queue position: {}".format(pcs.index(pc)))
+
+          @channel.on("message")
+          def on_message(message):
+              if isinstance(message, str) and message.startswith("ping"):
+                  #we use the 1 a second pong as heartbeat
+                  channel.send("pong" + message[4:])
+                  print(message)
+              elif isinstance(message, str) and message.startswith("startVideo:"):
+                print("Got Start Video")
+                #for t in pc.getTransceivers():
+                #  if t.kind == "video":
+                #    pc.addTrack(VideoImageTrack())
+                #pc.addTrack(VideoImageTrack())
+                #t.sender.replaceTrack(VideoImageTrack()) 
+              elif isinstance(message, str) and message.startswith("controller: "):
+                  vals = message[12:].split(',')
+                  jsupdate_vals(pc.js, vals)
+                  if (pc.js == js1):
+                    print("controller: js1")
+                  else:
+                    print("controller: js2")
+
+      @pc.on("iceconnectionstatechange")
+      async def on_iceconnectionstatechange():
+          print("ICE connection state is %s" % pc.iceConnectionState)
+          if pc.iceConnectionState == "failed":
             await pc.close()
             pcs.remove(pc)
+          
 
+
+    # handle offer
     await pc.setRemoteDescription(offer)
+
     for t in pc.getTransceivers():
         if t.kind == "video":
             pc.addTrack(VideoImageTrack())
+    
+#        #pc.addTrack(BogusStreamTrack())
 
+
+    # send answer
     answer = await pc.createAnswer()
     await pc.setLocalDescription(answer)
 
