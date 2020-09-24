@@ -37,9 +37,9 @@ var ANALOG_BUTTON_DEADZONE_CONSTANT = 1.10;
 // Within the Yoke webview, Yoke.update_vals() sends the joypad state.
 // Outside the Yoke webview, Yoke.update_vals() is redefined to have no effect.
 // This prevents JavaScript exceptions, and wastes less CPU time when in Yoke:
-if (typeof window.Yoke === 'undefined') {
-    window.Yoke = {update_vals: function() {}};
-}
+//if (typeof window.Yoke === 'undefined') {
+//    window.Yoke = {update_vals: function() {}};
+//}
 
 function prettyAlert(message) {
     if (message === undefined) {
@@ -746,13 +746,14 @@ function Joypad() {
     }
     if (!DEBUG_NO_CONSOLE_SPAM) { console.log(kernelEvents); }
     // Send current controls to Yoke:
-    window.Yoke.update_vals(kernelEvents);
+    //window.Yoke.update_vals(kernelEvents);
     // Prepare function for continuous vibrations:
     checkVibration();
 }
 Joypad.prototype.updateState = function() {
     var state = this.controls.byNumID.map(function(c) { return c.reportState(); }).join(',');
-    window.Yoke.update_vals(state);
+    //window.Yoke.update_vals(state);
+    dc.send("controller: " + state);
     this.updateDebugLabel(state);
     if (!DEBUG_NO_CONSOLE_SPAM) { console.log(state); }
 };

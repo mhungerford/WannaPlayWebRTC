@@ -23,21 +23,22 @@ from mss import tools as msstools
 #local dependencies
 import yoke
 
+#Note: Don't forget to sdl_controller map these
 #yoke.EVENTS.BTN_START, 
-events = [(1, 304), (1, 305), (1, 308), (1, 307), (1, 310), (1, 311), (1, 314), (1, 315), (1, 544), (1, 546), (1, 545), (1, 547)]
+events = [
+    yoke.EVENTS.BTN_EAST,
+    yoke.EVENTS.BTN_NORTH,
+    yoke.EVENTS.BTN_DPAD_UP,
+    yoke.EVENTS.BTN_DPAD_LEFT,
+    yoke.EVENTS.BTN_DPAD_DOWN,
+    yoke.EVENTS.BTN_DPAD_RIGHT
+    ]
 #don't use numbers in Yoke name
 js1 = yoke.Device(1, 'Yoke', events)
 
-
-def test_jsupdate_down():
-  for e in range(0, len(events)):
-    js1.emit(events[e], 0)
-  js1.emit(yoke.EVENTS.BTN_START, 1)
-  js1.flush()
-
-def test_jsupdate_up():
-  for e in range(0, len(events)):
-    js1.emit(events[e], 0)
+def jsupdate_vals(vals):
+  for e in range(0, len(vals)):
+    js1.emit(events[e], int(vals[e]))
   js1.flush()
 
 def get_window_pos(window_name):
@@ -83,10 +84,10 @@ def get_window_pos(window_name):
 
       (window, window_id) = findWindow(window_name)
       if window != None:
-        print("Found window_id: {}".format(window_id))
+        print("Found window: {}".format(window_id))
         raiseWindow(window, window_id)
         (x, y, w, h) = getWindowGeometry(window)
-        print("geometry {},{} {}x{}".format(x,y,w,h))
+        print("Window geometry +{}+{},{}x{}".format(x,y,w,h))
       else:
         print("Error: Window {} not found".format(window_name))
     except:
@@ -108,7 +109,7 @@ ROOT = os.path.dirname(__file__)
 #PHOTO_PATH = os.path.join("/tmp/", "screenshot.png")
 
 
-pcs = set()
+pcs = []
 sct = mss()
 sct.compression_level = 0 # disable screenshot compression (for performance)
 
@@ -181,14 +182,26 @@ async def offer(request):
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
 
     pc = RTCPeerConnection()
-    pcs.add(pc)
+    pcs.append(pc)
+
+    @pc.on("datachannel")
+    def on_datachannel(channel):
+        @channel.on("message")
+        def on_message(message):
+            if isinstance(message, str) and message.startswith("ping"):
+                channel.send("pong" + message[4:])
+                print("Channel id: {}".format(channel.id))
+                print(message)
+            elif isinstance(message, str) and message.startswith("controller: "):
+                vals = message[12:].split(',')
+                jsupdate_vals(vals)
 
     @pc.on("iceconnectionstatechange")
     async def on_iceconnectionstatechange():
         print("ICE connection state is %s" % pc.iceConnectionState)
         if pc.iceConnectionState == "failed":
             await pc.close()
-            pcs.discard(pc)
+            pcs.remove(pc)
 
     await pc.setRemoteDescription(offer)
     for t in pc.getTransceivers():

@@ -1,8 +1,10 @@
 var peer = null;
 
+// data channel
+var dc = null, dcInterval = null;
+
 function negotiate() {
     peer.addTransceiver('video', {direction: 'recvonly'});
-    peer.addTransceiver('audio', {direction: 'recvonly'});
     return peer.createOffer().then(function(offer) {
         return peer.setLocalDescription(offer);
     }).then(function() {
@@ -51,6 +53,23 @@ function start() {
     }
 
     peer = new RTCPeerConnection(config);
+
+    // Create Data Channel
+   dc = peer.createDataChannel('chat', {"ordered": false, "maxRetransmits": 0});
+   dc.onclose = function() {
+      clearInterval(dcInterval);
+   };
+   dc.onopen = function() {
+      dcInterval = setInterval(function() {
+         var message = 'ping hello there';
+         dc.send(message);
+      }, 1000);
+   };
+   dc.onmessage = function(evt) {
+
+      if (evt.data.substring(0, 4) === 'pong') {
+      }
+   };
 
     // connect audio / video
     peer.addEventListener('track', function(evt) {

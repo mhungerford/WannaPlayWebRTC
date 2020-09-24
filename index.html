@@ -42,6 +42,24 @@
 <!--body onload="loadPad('dpad.css')"-->
 <body>
     <script type="application/javascript" src="base.js"></script>
+    <script>
+       // ToggleFullScreen from Mozilla examples
+       // developer.mozilla.org/en-US/docs/Web/API/Fullscreen_API
+       function toggleFullScreen() {
+          var doc = window.document;
+          var docEl = doc.documentElement;
+
+          var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+          var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+          if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+             requestFullScreen.call(docEl);
+          }
+          else {
+             cancelFullScreen.call(doc);
+          }
+       }
+   </script>
 
 <div class="option">
     <input id="use-stun" type="checkbox" checked="true"/>
@@ -51,7 +69,7 @@
 <button id="start" onclick="document.getElementById('mjpeg').src='http://192.168.1.126:8100/?action=snapshot';loadPad('dpad.css');start()">Request Turn</button>
 <button id="stop" style="display: none" onclick="stop()">Stop</button>
 <div>
-<button id="send" onclick="peer.send()">Send</button>
+<button id="fullscreen" onclick="toggleFullScreen()">FullScreen</button>
 </div>
 
 <div id="media">
