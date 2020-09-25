@@ -6,36 +6,41 @@
 
     <title>Web4Player</title>
     <style>
-    button {
+
+    #option {
         position: absolute;
+        margin: 26px auto;
+	z-index: 100;
+    }
+
+    button {
         padding: 8px 16px;
-        z-index: 100;
     }
 
     video {
-        position: absolute;
-        width: 100vw;
-        height: 100vh;
+       opacity: 1;
+       width: 100%;
+       height: 100%;
+       object-fit: contain;
     }
 
     #mjpeg {
-        position: absolute;
-        display: inline-block;
-        max-width: 100%;
-        height: 100%;
-        margin: auto;
-        top:0;
-        left:0;
-        right:0;
-        bottom:0;
-    }
-
-    .option {
-        margin-bottom: 8px;
+       opacity: 1;
+       display: none;
+       width: 100%;
+       height: 100%;
     }
 
     #media {
-        max-width: 1280px;
+       position: absolute;
+       margin: auto;
+       top: 50%;
+       left: 0%;
+       transform: translate(0%, -50%);
+       visibility: visible;
+       opacity: 1;
+       width: 100%;
+       height: 100%;
     }
     </style>
 </head>
@@ -61,25 +66,19 @@
        }
    </script>
 
-<div class="option">
-    <input id="use-stun" type="checkbox" checked="true"/>
-    <label for="use-stun">Use STUN server</label>
-</div>
-
-<button id="start" onclick="document.getElementById('mjpeg').src='http://192.168.1.126:8100/?action=snapshot';loadPad('dpad.css');start()">Request Turn</button>
-<button id="stop" style="display: none" onclick="stop()">Stop</button>
-<button id="fullscreen" onclick="toggleFullScreen()">FullScreen</button>
-<div>
-<button id="play" onclick="addVideo();">Start</button>
+<div id="option">
+   <button id="start" onclick="document.getElementById('mjpeg').src='http://192.168.1.126:8100/?action=snapshot';loadPad('dpad.css');start()">Request Turn</button>
+   <button id="stop" style="display: none" onclick="stop()">Stop</button>
+   <button id="fullscreen" onclick="toggleFullScreen()">FullScreen</button>
+   <button id="play" onclick="addVideo();">Start</button>
 </div>
 
 <div id="media">
-    <audio id="audio" autoplay="true"></audio>
    <img id="mjpeg" src="http://192.168.1.126:8100/?action=stream" />
-    <div id="joypad">
-      <video id="video" autoplay="true" playsinline="true" />
-    </div>
+   <video id="video" autoplay="true" playsinline="true" />
 </div>
+   
+<div id="joypad"/>
 
 <script src="client.js"></script>
 </body>

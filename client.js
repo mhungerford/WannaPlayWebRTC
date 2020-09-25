@@ -68,9 +68,8 @@ function start() {
         sdpSemantics: 'unified-plan'
     };
 
-    if (document.getElementById('use-stun').checked) {
-        config.iceServers = [{urls: ['stun:stun.l.google.com:19302']}];
-    }
+    // Always use stun server
+   config.iceServers = [{urls: ['stun:stun.l.google.com:19302']}];
 
     pc = new RTCPeerConnection(config);
 
@@ -94,13 +93,11 @@ function start() {
 
 
 
-    // connect audio / video
+    // connect video
     pc.addEventListener('track', function(evt) {
         if (evt.track.kind == 'video') {
             console.log("Adding track" + evt.track.kind);
             document.getElementById('video').srcObject = evt.streams[0];
-        } else {
-            document.getElementById('audio').srcObject = evt.streams[0];
         }
     });
 

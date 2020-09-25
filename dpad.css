@@ -8,14 +8,14 @@
      * Controls may cover any rectangular area.
      * Do not try drawing non-rectangular shapes. */
         ".   .   .   .   .   .   .   .   .   .   .   .   .  .  .  .  "
-        ".   .   .   .   .   .   .   .   .   .   .   .   .  .  .  .   "
-        ".   .   .   .   .   .   .    .  .   .   .   .   .  .  .  .   "
-        ".   dp  dp  dp  dp  .   .   .  .  .   .   .  .  .  b2   b2   "
-        ".   dp  dp  dp  dp  .   .   .   .   .   .  .  .   .   b2  b2  "
-        ".   dp  dp  dp  dp  .   .   .  .  .   .  .  b1   b1   .  .  "
-        ".   dp  dp  dp  dp  .   .   .   .   .   .   .   b1  b1  .   .   "
-        ".   .   .   .   .   .   .   .   .   .   .   .   .  .  .   .   "
-        "dbg dbg dbg dbg dbg dbg dbg dbg dbg dbg dbg dbg dbg dbg dbg dbg "
+        ".   .   .   .   .   .   .   .   .   .   .   .   .  .  .  .  "
+        ".   .   .   .   .   .   .   .   .   .   .   .   .  .  .  .  "
+        ".   .   .   .   .   .   .   .   .   .   .   .   .  .  .  .  "
+        ".   dp  dp  dp  dp  .   .   .   .   .   .   .   .  b2 b2 .  "
+        ".   dp  dp  dp  dp  .   .   .   .   .   .   .   .  b2 b2 .  "
+        ".   dp  dp  dp  dp  .   .   .   .   .   .   b1 b1  .  .  .  "
+        ".   dp  dp  dp  dp  .   .   .   .   .   .   b1 b1  .  .  .  "
+        ".   .   .   .   .   .   .   .   .   .   .   .   .  .  .  .  "
         ;
         /* Possible values:
          * j1, j2, j3... for joystick (returns to center when released);
