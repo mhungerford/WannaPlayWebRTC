@@ -5,7 +5,7 @@ var dc = null, dcInterval = null;
 
 var vc = null;
 
-var uuid = uuidv4();
+var uuid = null;
 
 function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -64,6 +64,9 @@ function addVideo() {
 }
 
 function start() {
+    // New session uuid each start
+    uuid = uuidv4();
+    
     var config = {
         sdpSemantics: 'unified-plan'
     };
@@ -89,6 +92,9 @@ function start() {
 
       if (evt.data.substring(0, 4) === 'pong') {
       }
+      if (evt.data.substring(0, 5) === 'start') {
+         addVideo();
+      }
    };
 
 
@@ -109,12 +115,13 @@ function start() {
 
     negotiate();
 
-    //document.getElementById('start').style.display = 'none';
-    //document.getElementById('stop').style.display = 'inline-block';
+    document.getElementById('start').style.display = 'none';
+    document.getElementById('stop').style.display = 'inline-block';
 }
 
 function stop() {
-    //document.getElementById('stop').style.display = 'none';
+    document.getElementById('start').style.display = 'inline-block';
+    document.getElementById('stop').style.display = 'none';
 
     // close data channel
     if (dc) {
@@ -128,10 +135,12 @@ function stop() {
                 transceiver.stop();
             }
         });
+        vc = null;
     }
 
     // close peer connection
     setTimeout(function() {
         pc.close();
+        pc = null;
     }, 500);
 }

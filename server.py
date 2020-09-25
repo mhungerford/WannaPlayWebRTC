@@ -193,12 +193,6 @@ async def offer(request):
       pc = RTCPeerConnection()
       setattr(pc, 'uuid',uuid)
       pcs.append(pc)
-      if pcs.index(pc) == 0:
-        print("adding JS1")
-        setattr(pc, 'js', js1)
-      else:
-        setattr(pc, 'js', js2)
-        print("adding JS2")
       #print("pc uuid is {}".format(pc.uuid))
       #print("pc uuid is {}".format(getattr(pc, 'uuid'))
     
@@ -211,11 +205,21 @@ async def offer(request):
       def on_datachannel(channel):
           print("Channel id: {}".format(channel.id))
           #print("queue position: {}".format(pcs.index(pc)))
+          idx = pcs.index(pc)
+          if idx < 4:
+            channel.send("start")
+            if idx == 0:
+              setattr(pc, 'js', js1)
+            elif idx == 1:
+              setattr(pc, 'js', js2)
+            elif idx == 2:
+              setattr(pc, 'js', js3)
+            elif idx == 3:
+              setattr(pc, 'js', js4)
 
           @channel.on("close")
           def on_close():
             print("Close Channel id: {}".format(channel.id))
-            #print("Close queue position: {}".format(pcs.index(pc)))
 
           @channel.on("message")
           def on_message(message):
@@ -223,20 +227,10 @@ async def offer(request):
                   #we use the 1 a second pong as heartbeat
                   channel.send("pong" + message[4:])
                   print(message)
-              elif isinstance(message, str) and message.startswith("startVideo:"):
-                print("Got Start Video")
-                #for t in pc.getTransceivers():
-                #  if t.kind == "video":
-                #    pc.addTrack(VideoImageTrack())
-                #pc.addTrack(VideoImageTrack())
-                #t.sender.replaceTrack(VideoImageTrack()) 
               elif isinstance(message, str) and message.startswith("controller: "):
                   vals = message[12:].split(',')
-                  jsupdate_vals(pc.js, vals)
-                  if (pc.js == js1):
-                    print("controller: js1")
-                  else:
-                    print("controller: js2")
+		  if getattr(pc, pc.js) is not None:
+                  	jsupdate_vals(pc.js, vals)
 
       @pc.on("iceconnectionstatechange")
       async def on_iceconnectionstatechange():
