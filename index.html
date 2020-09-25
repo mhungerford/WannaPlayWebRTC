@@ -7,8 +7,22 @@
     <title>Web4Player</title>
     <style>
 
+    html {
+       touch-action: none;
+       user-select: none;
+       -webkit-user-select: none;
+    }
+
+    body {
+       margin: 0;
+       padding: 0;
+       overflow: hidden;
+       text-align: center;
+       vertical-align: middle;
+    }
+
     #option {
-        position: absolute;
+        position: relative;
         margin: 26px auto;
 	z-index: 100;
     }
@@ -29,6 +43,7 @@
        display: none;
        width: 100%;
        height: 100%;
+       object-fit: cover;
     }
 
     #media {

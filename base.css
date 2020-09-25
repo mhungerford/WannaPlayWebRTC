@@ -1,18 +1,5 @@
 /* Basic properties */
 
-html {
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-body {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    text-align: center;
-    vertical-align: middle;
-}
 
 #joypad {
     display: none;
