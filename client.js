@@ -103,6 +103,7 @@ function start() {
     pc.addEventListener('track', function(evt) {
         if (evt.track.kind == 'video') {
             console.log("Adding track" + evt.track.kind);
+            document.getElementById('video').style.display = 'inline-block';
             document.getElementById('video').srcObject = evt.streams[0];
         }
     });
@@ -120,8 +121,9 @@ function start() {
 }
 
 function stop() {
-    document.getElementById('start').style.display = 'inline-block';
     document.getElementById('stop').style.display = 'none';
+    document.getElementById('video').style.display = 'none';
+    document.getElementById('joypad').style.display = 'none';
 
     // close data channel
     if (dc) {
@@ -142,5 +144,12 @@ function stop() {
     setTimeout(function() {
         pc.close();
         pc = null;
+        // Force the whole page to reload
+        //window.location.reload();
     }, 500);
+
+    // Wait a bit to show the request button again
+    setTimeout(function() {
+      document.getElementById('start').style.display = 'inline-block';
+    }, 5 * 1000);
 }

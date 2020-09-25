@@ -7,6 +7,7 @@ import platform
 import ssl
 import sys, traceback
 from sys import platform
+from collections import namedtuple
 
 from aiohttp import web
 
@@ -33,11 +34,15 @@ events = [
     yoke.EVENTS.BTN_DPAD_DOWN,
     yoke.EVENTS.BTN_DPAD_RIGHT
     ]
+
+#quick list of js allocated
+JSDev = namedtuple("JSDev",['dev', 'locked', 'idx'])
+jslist = []
 #don't use numbers in Yoke name
-js1 = yoke.Device(1, 'Yoke', events)
-js2 = yoke.Device(2, 'Yoke', events)
-js3 = yoke.Device(3, 'Yoke', events)
-js4 = yoke.Device(4, 'Yoke', events)
+jslist.append(JSDev(yoke.Device(1, 'Yoke', events), False, 1))
+jslist.append(JSDev(yoke.Device(2, 'Yoke', events), False, 2))
+jslist.append(JSDev(yoke.Device(3, 'Yoke', events), False, 3))
+jslist.append(JSDev(yoke.Device(4, 'Yoke', events), False, 4))
 
 def jsupdate_vals(js, vals):
   for e in range(0, len(vals)):
@@ -130,9 +135,6 @@ def capture_screenshot():
   global raw_image #use global so we can reuse frames from process thread
   raw_image = np.array(sct_img)
 
-class BogusStreamTrack(VideoStreamTrack):
-    kind = "video"
-
 class VideoImageTrack(VideoStreamTrack):
     """
     A video stream track that returns a rotating image.
@@ -183,6 +185,10 @@ async def dpadcss(request):
 
 
 async def offer(request):
+    #cap rtc peers at <X>
+    if len(pcs) > 50:
+      return
+    
     params = await request.json()
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
     uuid = str(params["uuid"])
@@ -193,29 +199,11 @@ async def offer(request):
       pc = RTCPeerConnection()
       setattr(pc, 'uuid',uuid)
       pcs.append(pc)
-      #print("pc uuid is {}".format(pc.uuid))
-      #print("pc uuid is {}".format(getattr(pc, 'uuid'))
     
-      #@pc.on("track")
-      #def on_track(track):
-      #  pc.addTrack(VideoImageTrack(track))
-      #pc.addTrack(VideoImageTrack())
-
       @pc.on("datachannel")
       def on_datachannel(channel):
           print("Channel id: {}".format(channel.id))
           #print("queue position: {}".format(pcs.index(pc)))
-          idx = pcs.index(pc)
-          if idx < 4:
-            channel.send("start")
-            if idx == 0:
-              setattr(pc, 'js', js1)
-            elif idx == 1:
-              setattr(pc, 'js', js2)
-            elif idx == 2:
-              setattr(pc, 'js', js3)
-            elif idx == 3:
-              setattr(pc, 'js', js4)
 
           @channel.on("close")
           def on_close():
@@ -224,19 +212,33 @@ async def offer(request):
           @channel.on("message")
           def on_message(message):
               if isinstance(message, str) and message.startswith("ping"):
-                  #we use the 1 a second pong as heartbeat
+                  #we use the 1 a second ping as heartbeat (and query)
                   channel.send("pong" + message[4:])
-                  print(message)
+                  # if they don't have a js, and one is available
+                  if getattr(pc, 'js', None) is None:
+                    jsdev = next((x for x in jslist if x.locked == False), None)
+                    if jsdev is not None:
+                      setattr(pc, 'js', jsdev.dev)
+                      print("Assigning joystick:{}".format(jsdev.idx))
+                      jsdev = jsdev._replace(locked = True)
+                      #trigger to start a direct webrtc video feed (low latency)
+                      channel.send("start")
+            
               elif isinstance(message, str) and message.startswith("controller: "):
                   vals = message[12:].split(',')
-		  if getattr(pc, pc.js) is not None:
-                  	jsupdate_vals(pc.js, vals)
+                  if getattr(pc, 'js', None) is not None:
+                    jsupdate_vals(pc.js, vals)
 
       @pc.on("iceconnectionstatechange")
       async def on_iceconnectionstatechange():
           print("ICE connection state is %s" % pc.iceConnectionState)
           if pc.iceConnectionState == "failed":
             await pc.close()
+            js = getattr(pc, 'js', None)
+            if js is not None:
+              jsdev = next((x for x in jslist if x.dev == js), None)
+              if jsdev is not None:
+                jsdev = jsdev._replace(locked =  False)
             pcs.remove(pc)
           
 
@@ -248,7 +250,6 @@ async def offer(request):
         if t.kind == "video":
             pc.addTrack(VideoImageTrack())
     
-#        #pc.addTrack(BogusStreamTrack())
 
 
     # send answer
