@@ -7,6 +7,7 @@ import platform
 import ssl
 import sys, traceback
 from sys import platform
+from time import sleep
 from collections import namedtuple
 
 from aiohttp import web
@@ -44,10 +45,17 @@ jslist.append(JSDev(yoke.Device(2, 'Yoke', events), False, 2))
 jslist.append(JSDev(yoke.Device(3, 'Yoke', events), False, 3))
 jslist.append(JSDev(yoke.Device(4, 'Yoke', events), False, 4))
 
+for jsdev in jslist:
+  for e in range(0, len(events)):
+    jsdev.dev.emit(events[e], 0)
+
 def jsupdate_vals(js, vals):
   for e in range(0, len(vals)):
     js.emit(events[e], int(vals[e]))
   js.flush()
+
+#hack to wait for pico8 window launched
+sleep(6)
 
 def get_window_pos(window_name):
   print("Looking for window: {}".format(window_name))
@@ -208,6 +216,13 @@ async def offer(request):
           @channel.on("close")
           def on_close():
             print("Close Channel id: {}".format(channel.id))
+            js = getattr(pc, 'js', None)
+            if js is not None:
+              jsdev = next((x for x in jslist if x.dev == js), None)
+              if jsdev is not None:
+                print("Freeing joystick:{}".format(jsdev.idx))
+                jslist[jslist.index(jsdev)] = jsdev._replace(locked =  False)
+              setattr(pc, 'js', None)
 
           @channel.on("message")
           def on_message(message):
@@ -220,7 +235,7 @@ async def offer(request):
                     if jsdev is not None:
                       setattr(pc, 'js', jsdev.dev)
                       print("Assigning joystick:{}".format(jsdev.idx))
-                      jsdev = jsdev._replace(locked = True)
+                      jslist[jslist.index(jsdev)] = jsdev._replace(locked = True)
                       #trigger to start a direct webrtc video feed (low latency)
                       channel.send("start")
             
@@ -238,7 +253,8 @@ async def offer(request):
             if js is not None:
               jsdev = next((x for x in jslist if x.dev == js), None)
               if jsdev is not None:
-                jsdev = jsdev._replace(locked =  False)
+                print("Freeing joystick:{}".format(jsdev.idx))
+                jslist[jslist.index(jsdev)] = jsdev._replace(locked =  False)
             pcs.remove(pc)
           
 

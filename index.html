@@ -1,7 +1,7 @@
 <html>
 <head>
     <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content='width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;' />
     <link rel="stylesheet" type="text/css" href="base.css" />
 
     <title>Web4Player</title>
@@ -19,6 +19,7 @@
        overflow: hidden;
        text-align: center;
        vertical-align: middle;
+       height: 100%;
     }
 
     #option {
@@ -94,6 +95,9 @@
 
 <div id="media">
    <img id="mjpeg" src="http://192.168.1.126:8100/?action=stream" />
+</div>
+
+<div>
    <video id="video" autoplay="true" playsinline="true" />
 </div>
    
