@@ -41,6 +41,9 @@ var ANALOG_BUTTON_DEADZONE_CONSTANT = 1.10;
 //    window.Yoke = {update_vals: function() {}};
 //}
 
+var lastState = "";
+
+
 function prettyAlert(message) {
     if (message === undefined) {
         if (warnings.length > 0) {
@@ -753,7 +756,11 @@ function Joypad() {
 Joypad.prototype.updateState = function() {
     var state = this.controls.byNumID.map(function(c) { return c.reportState(); }).join(',');
     //window.Yoke.update_vals(state);
-    dc.send("controller: " + state);
+    // reduce the bandwidth by only sending when state changes
+    if (state != lastState) {
+      dc.send("controller: " + state);
+      lastState = state;
+    }
     this.updateDebugLabel(state);
     if (!DEBUG_NO_CONSOLE_SPAM) { console.log(state); }
 };
