@@ -25,8 +25,10 @@ from mss import tools as msstools
 # optional, for better performance than asyncio default loop
 try:
     import uvloop
+    print("using uvloop for performance")
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 except ImportError:
-    uvloop = None
+    pass
 
 
 #local dependencies
@@ -321,10 +323,6 @@ if __name__ == "__main__":
         ssl_context.load_cert_chain(args.cert_file, args.key_file)
     else:
         ssl_context = None
-
-    if uvloop is not None:
-        print("using uvloop for performance")
-        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
