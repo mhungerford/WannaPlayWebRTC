@@ -22,6 +22,13 @@ from av import VideoFrame
 from mss import mss #fast screen-shots
 from mss import tools as msstools
 
+# optional, for better performance than asyncio default loop
+try:
+    import uvloop
+except ImportError:
+    uvloop = None
+
+
 #local dependencies
 import yoke
 
@@ -279,6 +286,11 @@ async def offer(request):
         ),
     )
 
+async def run():
+    await asyncio.gather(
+        web._run_app(app, host=args.host, port=args.port, ssl_context=ssl_context)
+    )
+  
 
 async def on_shutdown(app):
     # close peer connections
@@ -310,6 +322,10 @@ if __name__ == "__main__":
     else:
         ssl_context = None
 
+    if uvloop is not None:
+        print("using uvloop for performance")
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/", index)
@@ -319,4 +335,9 @@ if __name__ == "__main__":
     app.router.add_get("/base.css", basecss)
     app.router.add_get("/dpad.css", dpadcss)
     app.add_routes([web.static('/img','img')])
-    web.run_app(app, host=args.host, port=args.port, ssl_context=ssl_context)
+
+    #web.run_app(app, host=args.host, port=args.port, ssl_context=ssl_context)
+    #asyncio.run(run())
+    loop = asyncio.get_event_loop()
+    result = loop.run_until_complete(run())
+
