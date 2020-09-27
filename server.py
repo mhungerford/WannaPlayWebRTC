@@ -286,7 +286,7 @@ async def offer(request):
         ),
     )
 
-async def run():
+async def run(web, app, args, ssl_context):
     await asyncio.gather(
         web._run_app(app, host=args.host, port=args.port, ssl_context=ssl_context)
     )
@@ -339,5 +339,7 @@ if __name__ == "__main__":
     #web.run_app(app, host=args.host, port=args.port, ssl_context=ssl_context)
     #asyncio.run(run())
     loop = asyncio.get_event_loop()
-    result = loop.run_until_complete(run())
+    loop.run_until_complete(
+        run(web, app, args, ssl_context)
+    )
 
