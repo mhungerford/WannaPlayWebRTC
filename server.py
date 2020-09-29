@@ -21,6 +21,7 @@ from av import VideoFrame
 
 from mss import mss #fast screen-shots
 from mss import tools as msstools
+from multiprocessing import Process, Array, RawArray
 
 # optional, for better performance than asyncio default loop
 try:
@@ -135,22 +136,32 @@ ROOT = os.path.dirname(__file__)
 
 
 pcs = []
-sct = mss()
-sct.compression_level = 0 # disable screenshot compression (for performance)
 
-raw_image = None
+#using raw as we don't need to lock the data (pixels may flicker)
+shared_image_array = RawArray('B', 128 * 128 * 4)
 
 win_x, win_y, win_w, win_h = get_window_pos('PICO-8')
 
-def capture_screenshot():
-  # The screen part to capture
-  monitor = {"top": win_y, "left": win_x, "width": win_w, "height": win_h}
-  # Grab the data
-  sct_img = sct.grab(monitor)
-  # Save to the picture file
-  #msstools.to_png(sct_img.rgb, sct_img.size, output="/tmp/screenshot.png")  
-  global raw_image #use global so we can reuse frames from process thread
-  raw_image = np.array(sct_img)
+
+#capture images in a background process and store to shared mp array
+def process_capture_images(shared_image_array):
+  sct = mss()
+  sct.compression_level = 0 # disable screenshot compression (for performance)
+
+  while True:
+    # The screen part to capture
+    monitor = {"top": win_y, "left": win_x, "width": win_w, "height": win_h}
+    # Grab the data
+    sct_img = sct.grab(monitor)
+    img_np = np.array(sct_img)
+    # "interpret" buffer as numpy array
+    img_wrap = np.frombuffer(shared_image_array, img_np.dtype).reshape(img_np.shape)
+    np.copyto(img_wrap, img_np)
+    sleep(0.033) # ~30 FPS image retrieval
+
+process = Process(target=process_capture_images, args=(shared_image_array,))
+process.start()
+
 
 class VideoImageTrack(VideoStreamTrack):
     """
@@ -165,12 +176,11 @@ class VideoImageTrack(VideoStreamTrack):
     async def recv(self):
         pts, time_base = await self.next_timestamp()
 
-        # rotate image
-        capture_screenshot()
+        # "interpret" Shared Buffer Image as numpy array
+        raw_image = np.frombuffer(shared_image_array, np.uint8).reshape(win_w, win_h, 4)
         #img = cv2.imread("/tmp/screenshot.png", cv2.IMREAD_COLOR)
 
         # create video frame
-        #frame = VideoFrame.from_ndarray(img, format="bgr24")
         frame = VideoFrame.from_ndarray(raw_image, format="bgra")
         frame.pts = pts
         frame.time_base = time_base
@@ -335,7 +345,7 @@ if __name__ == "__main__":
     app.add_routes([web.static('/img','img')])
 
     #web.run_app(app, host=args.host, port=args.port, ssl_context=ssl_context)
-    #asyncio.run(run())
+    # (For Python < 3.7, below is equivalent to asyncio.run(run())
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
         run(web, app, args, ssl_context)
