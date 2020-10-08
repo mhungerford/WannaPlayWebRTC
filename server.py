@@ -1,27 +1,34 @@
 import argparse
-import asyncio
 import json
 import logging
 import os
-import platform
 import ssl
 import sys, traceback
-from sys import platform
-from time import sleep
+from time import sleep, time
 from collections import namedtuple
+from pathlib import Path
 
+import asyncio
 from aiohttp import web
+from aiortc import RTCPeerConnection, RTCConfiguration, RTCSessionDescription
+from aiortc import RTCIceCandidate, RTCIceServer
+from aiortc import VideoStreamTrack
+import av
+from multiprocessing import Process, RawArray
+from easyprocess import EasyProcess
 
-from aiortc import RTCPeerConnection, RTCSessionDescription, MediaStreamTrack, VideoStreamTrack
-from aiortc.contrib.media import MediaPlayer
-
+#desktop screenshot support
+from mss import mss
+import PIL
+from PIL import Image
 import numpy as np
-#import cv2
-from av import VideoFrame
 
-from mss import mss #fast screen-shots
-from mss import tools as msstools
-from multiprocessing import Process, Array, RawArray
+#grab window support (for apps launched prior to this server)
+from grabwindow import GrabWindow
+
+#Virtual Joystick or Virtual Keyboard dependencies
+import yoke # requires uinput and udev.rules (ie. root) (supports 4 controllers)
+from sdlkbdsim import SdlKbdSim # requires sdlwrap binary use (supports keyboard)
 
 # optional, for better performance than asyncio default loop
 try:
@@ -31,9 +38,16 @@ try:
 except ImportError:
     pass
 
+ROOT = os.path.dirname(os.path.abspath(__file__))
 
-#local dependencies
-import yoke
+#list of Peer Connections to track
+pcs = []
+pcs_max_size = 0
+
+shared_image_array = None
+
+#instance of SdlKbdSim for keyboard control
+sdlkbdsim = SdlKbdSim()
 
 #Note: Don't forget to sdl_controller map these
 #yoke.EVENTS.BTN_START, 
@@ -46,121 +60,73 @@ events = [
     yoke.EVENTS.BTN_DPAD_RIGHT
     ]
 
-#quick list of js allocated
-JSDev = namedtuple("JSDev",['dev', 'locked', 'idx'])
+#list of js allocated
 jslist = []
-#don't use numbers in Yoke name
-jslist.append(JSDev(yoke.Device(1, 'Yoke', events), False, 1))
-jslist.append(JSDev(yoke.Device(2, 'Yoke', events), False, 2))
-jslist.append(JSDev(yoke.Device(3, 'Yoke', events), False, 3))
-jslist.append(JSDev(yoke.Device(4, 'Yoke', events), False, 4))
-
-for jsdev in jslist:
-  for e in range(0, len(events)):
-    jsdev.dev.emit(events[e], 0)
+JSDev = namedtuple("JSDev",['dev', 'locked', 'idx'])
 
 def jsupdate_vals(js, vals):
-  for e in range(0, len(vals)):
-    js.emit(events[e], int(vals[e]))
-  js.flush()
-
-#hack to wait for pico8 window launched
-sleep(6)
-
-def get_window_pos(window_name):
-  print("Looking for window: {}".format(window_name))
-  if platform == "linux":
-    x, y, w, h = (0,0,128,128)
-    try:
-      import Xlib.display
-      disp = Xlib.display.Display()
-      root = disp.screen().root
-
-      def sendEvent(window, ctype, data, mask=None):
-        """ Send a ClientMessage event to the root """
-        if not window: window = self.root
-        if type(data) is str:
-          dataSize = 8
-        else:
-          data = (data+[0]*(5-len(data)))[:5]
-          dataSize = 32
-        ev = Xlib.protocol.event.ClientMessage(window=window, client_type=ctype, data=(dataSize,(data)))
-        if not mask:
-          mask = (Xlib.X.SubstructureRedirectMask|Xlib.X.SubstructureNotifyMask)
-        root.send_event(ev, event_mask=mask)
-
-      def raiseWindow(window, window_id):
-        #newer focus command to root window
-        sendEvent(window, disp.intern_atom('_NET_ACTIVE_WINDOW'), [window_id]) 
-
-      def findWindow(window_name):
-        window_ids = root.get_full_property(disp.intern_atom('_NET_CLIENT_LIST'), Xlib.X.AnyPropertyType).value
-        for window_id in window_ids:
-          window = disp.create_resource_object('window', window_id)
-          #cannot use get_wm_name, as it errors on certain windows (firefox)
-          prop = window.get_full_property(disp.intern_atom('_NET_WM_NAME'), 0)
-          wm_name = getattr(prop, 'value', '')
-          if wm_name == window_name:
-            return (window, window_id)
-
-      def getWindowGeometry(window):
-        geometry = window.get_geometry()
-        abs_coords = root.translate_coords(window, 0, 0)
-        return (abs_coords.x, abs_coords.y, geometry.width, geometry.height)
-
-      (window, window_id) = findWindow(window_name)
-      if window != None:
-        print("Found window: {}".format(window_id))
-        raiseWindow(window, window_id)
-        (x, y, w, h) = getWindowGeometry(window)
-        print("Window geometry +{}+{},{}x{}".format(x,y,w,h))
-      else:
-        print("Error: Window {} not found".format(window_name))
-    except:
-      print("XLIB error {}".format(sys.exc_info()[0]))
-      print("XLIB line: {}".format(sys.exc_info()[2].tb_lineno))
-      print(traceback.format_exc())
-    return (x, y, w, h)
+  if isinstance(js, yoke.Device):
+    for idx, state in enumerate(vals):
+      js.emit(events[idx], int(state))
+    js.flush()
   else:
-    import pygetwindow as getwindow
-    gamewindow = getwindow(window_name)[0]
-    x = gamewindow.top
-    y = gamewindow.left
-    w, h = gamewindow.size
-    return (x, y, w, h)
+    for idx, state in enumerate(vals):
+      sdlkbdsim.setkey(idx, int(state))
 
 
+#grab and decode images in a background process and store to shared mp array
+def process_dumped_images(shared_image_array,
+    image_path='/tmp/sdl', image_prefix='SDL_window2-', image_format='bmp'):
 
-ROOT = os.path.dirname(__file__)
-#PHOTO_PATH = os.path.join("/tmp/", "screenshot.png")
+  last_time = time()
 
-
-pcs = []
-
-#using raw as we don't need to lock the data (pixels may flicker)
-shared_image_array = RawArray('B', 128 * 128 * 4)
-
-win_x, win_y, win_w, win_h = get_window_pos('PICO-8')
+  while True:
+    pics = list(Path(image_path).glob(image_prefix + '*.' + image_format))
+    if len(pics) > 0:
+      lastpic = pics[-1]
+      filesize = lastpic.stat().st_size
+      if filesize >= 49206:
+        try:
+          with Image.open(lastpic) as img:
+            imb = img.tobytes()
+            shared_image_array[:] = imb
+          for pic in pics:
+            pic.unlink()
+        except OSError:
+          pass
+        except PIL.UnidentifiedImageError:
+          pass
+    curr_time = time()
+    sleep(max(0, 0.033 - (curr_time - last_time))) # ~30 FPS image retrieval
+    last_time = curr_time
 
 
 #capture images in a background process and store to shared mp array
-def process_capture_images(shared_image_array):
+def process_capture_images(shared_image_array,
+    window_position=(0, 0), window_size=(128, 128)):
   sct = mss()
   sct.compression_level = 0 # disable screenshot compression (for performance)
+  # The screen part to capture
+  monitor = {
+      "top": window_position[1], 
+      "left": window_position[0], 
+      "width": window_size[0],
+      "height": window_size[1]
+      }
+  last_time = time()
 
   while True:
-    # The screen part to capture
-    monitor = {"top": win_y, "left": win_x, "width": win_w, "height": win_h}
     # Grab the data
     sct_img = sct.grab(monitor)
     img_np = np.array(sct_img)
     # "interpret" buffer as numpy array
     img_wrap = np.frombuffer(shared_image_array, img_np.dtype).reshape(img_np.shape)
     np.copyto(img_wrap, img_np)
-    sleep(0.033) # ~30 FPS image retrieval
 
-process = Process(target=process_capture_images, args=(shared_image_array,))
-process.start()
+    curr_time = time()
+    sleep(max(0, 0.033 - (curr_time - last_time))) # ~30 FPS image retrieval
+    last_time = curr_time
+
 
 
 class VideoImageTrack(VideoStreamTrack):
@@ -177,11 +143,13 @@ class VideoImageTrack(VideoStreamTrack):
         pts, time_base = await self.next_timestamp()
 
         # "interpret" Shared Buffer Image as numpy array
-        raw_image = np.frombuffer(shared_image_array, np.uint8).reshape(win_w, win_h, 4)
+        #raw_image = np.frombuffer(shared_image_array, np.uint8).reshape(win_w, win_h, 4)
+        raw_image = np.frombuffer(shared_image_array, np.uint8).reshape(win_w, win_h, 3)
         #img = cv2.imread("/tmp/screenshot.png", cv2.IMREAD_COLOR)
 
         # create video frame
-        frame = VideoFrame.from_ndarray(raw_image, format="bgra")
+        #frame = av.VideoFrame.from_ndarray(raw_image, format="bgra")
+        frame = av.VideoFrame.from_ndarray(raw_image, format="rgb24")
         frame.pts = pts
         frame.time_base = time_base
         
@@ -213,7 +181,7 @@ async def dpadcss(request):
 
 async def offer(request):
     #cap rtc peers at <X>
-    if len(pcs) > 50:
+    if len(pcs) > pcs_max_size:
       return
     
     params = await request.json()
@@ -224,6 +192,14 @@ async def offer(request):
 
     if pc is None:
       pc = RTCPeerConnection()
+#          configuration=RTCConfiguration(
+#            iceServers=[
+#            RTCIceServer(urls=["stun:stun.l.google:19302"]),
+#            RTCIceServer(urls=["turn:0.peerjs.com:3478"], username="peerjs", credential="peerjsp"),
+#            RTCIceServer(urls=["turn:turn.bistri.com:80"], username="homeo", credential="homeo"),
+#            RTCIceServer(urls=["turn:turn.anyfirewall.com:443"], username="webrtc", credential="webrtc")
+#            ]))
+
       setattr(pc, 'uuid',uuid)
       pcs.append(pc)
     
@@ -307,19 +283,28 @@ async def on_shutdown(app):
     coros = [pc.close() for pc in pcs]
     await asyncio.gather(*coros)
     pcs.clear()
+    #proc.stop()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WebRTC webcam demo")
     parser.add_argument("--cert-file", help="SSL certificate file (for HTTPS)")
     parser.add_argument("--key-file", help="SSL key file (for HTTPS)")
-    parser.add_argument("--play-from", help="Read the media from a file and sent it."),
-    parser.add_argument(
-        "--host", default="0.0.0.0", help="Host for HTTP server (default: 0.0.0.0)"
-    )
-    parser.add_argument(
-        "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)"
-    )
+    parser.add_argument("--grab-window", help="Grab a currently running app window by WindowName provided.")
+    parser.add_argument("--launch-sdl-app", 
+        help="Launch the application command (opposite to --grab-window).")
+    parser.add_argument("--window_size", type=str, default="128 128",
+        help="Set sdl window size (w h) for launch-sdl-app.")
+    parser.add_argument("--enable-virtual-keyboard", action="store_true", 
+        help="Use sdl event injector for virtual keys. (requires --launch-sdl-app)")
+    parser.add_argument("--enable_waitlist", type=int, default=4,
+        help="Enable Waitlist and queue size (default: 4 for joysticks, 2 for keyboard)")
+    parser.add_argument("--number-of-players", type=int, default=4,
+        help="How many controllers to allocate (default: 4 for joysticks, 2 for keyboard)")
+    parser.add_argument("--host", default="0.0.0.0", 
+        help="Host for HTTP server (default: 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=8080, 
+        help="Port for HTTP server (default: 8080)")
     parser.add_argument("--verbose", "-v", action="count")
     args = parser.parse_args()
 
@@ -331,16 +316,75 @@ if __name__ == "__main__":
         ssl_context.load_cert_chain(args.cert_file, args.key_file)
     else:
         ssl_context = None
+    
+    pcs_max_size = args.enable_waitlist
+
+    #some games prefer joysticks setup before launching
+    if args.enable_virtual_keyboard:
+      jslist.append(JSDev(1, False, 1))
+    else:
+      #using yoke uinput based virtual joysticks
+      #don't use numbers in Yoke name
+      for idx in range(0, args.number_of_players):
+        jslist.append(JSDev(yoke.Device(idx + 1, 'Yoke', events), False, idx + 1))
+      #send non-pressed buttons for all virtual joystics
+      for jsdev in jslist:
+        for event in events:
+          jsdev.dev.emit(event, 0)
+        jsdev.dev.flush()
+
+    if args.grab_window:
+      win_x, win_y, win_w, win_h = GrabWindow(args.grab-window)
+      shared_image_array = RawArray('B', win_w * win_h * 4)
+      process = Process(target=process_captured_images, 
+          args=(shared_image_array, (win_x, win_y), (win_w, win_h)))
+      process.start()
+    else:
+      win_x, win_y, win_w, win_h = (0, 0, 
+          int(args.window_size.split(" ")[0]), 
+          int(args.window_size.split(" ")[1]))
+      #using raw as we don't need to lock the data (pixels may flicker)
+      shared_image_array = RawArray('B', win_w * win_h * 3)
+      os.environ["SDL_VIDEODRIVER"]= "dummy"
+      os.environ["SDL_VIDEO_DUMMY_SAVE_FRAMES"] = "1"
+      os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
+      #need to configure our joystick if using our own pico-8 config
+      os.environ["SDL_GAMECONTROLLERCONFIG"] = "06000000596f6b650000000000000000,Yoke,platform:Linux,a:b0,b:b1,dpup:b2,dpdown:b3,dpleft:b4,dpright:b5,"
+
+      #move into /tmp/sdl directory to have sdl image dumps there
+      cwd = os.getcwd()
+      if not os.path.isdir("/tmp/sdl"):
+        os.mkdir("/tmp/sdl")
+      os.chdir("/tmp/sdl")
+
+      #requires remotekb_wrap in launch for sdlkbdsim use
+      proc = EasyProcess(
+        os.path.join(ROOT, "tsi/tsi") +
+        " -windowed 1" +
+        " -width 128" +
+        " -height 128" +
+        " -frameless 1" +
+        " -volume 0" +
+        " -foreground_sleep_ms 20" +
+        " -home /tmp")
+      proc.start()
+
+      os.chdir(cwd)
+
+      process = Process(target=process_dumped_images, args=(shared_image_array,))
+      process.start()
+
 
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/", index)
     app.router.add_get("/client.js", javascript)
-    app.router.add_post("/offer", offer)
     app.router.add_get("/base.js", basejs)
     app.router.add_get("/base.css", basecss)
     app.router.add_get("/dpad.css", dpadcss)
     app.add_routes([web.static('/img','img')])
+
+    app.router.add_post("/offer", offer)
 
     #web.run_app(app, host=args.host, port=args.port, ssl_context=ssl_context)
     # (For Python < 3.7, below is equivalent to asyncio.run(run())
