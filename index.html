@@ -24,22 +24,39 @@
 
     #option {
         position: relative;
-        margin: 26px auto;
+        margin: 6px auto;
 	z-index: 100;
     }
 
     button {
-        padding: 8px 16px;
+        padding: 6px 16px;
+        margin: 0 8px;
     }
 
-    video {
+    #video {
+       position: absolute;
+       top: 40%;
+       left: 50%;
+       transform: translate(-50%, -40%);
+       width: 72%;
+       height: 72%;
+       opacity: 1;
+       object-fit: contain;
+       filter:
+            drop-shadow(0 -4px 0 black)
+            drop-shadow(0 4px 0 black)
+            drop-shadow(-4px 0 0 black)
+            drop-shadow(4px 0 0 black);
+    }
+
+    #video2 {
        position: absolute;
        top: 0;
        left: 0;
        width: 100%;
        height: 100%;
        opacity: 1;
-       object-fit: contain;
+       object-fit: cover;
     }
 
     #mjpeg {
@@ -98,7 +115,10 @@
 </div>
 
 <div>
-   <video id="video" autoplay="true" playsinline="true" />
+   <video id="video" autoplay="false" playsinline="true" />
+</div>
+<div>
+   <video id="video2" autoplay="true" loop muted playsinline="true" src="img/drivetest.mp4" />
 </div>
    
 <div id="joypad"/>

@@ -1,21 +1,30 @@
 /* Gamepad settings the user might want to change. */
 
 #joypad {
-    grid-template-columns: repeat(16, 1fr);
-    grid-template-rows: repeat(9, 1fr);
+    grid-template-columns: repeat(32, 1fr);
+    grid-template-rows: repeat(18, 1fr);
     grid-template-areas:
     /* The map below must match the number of rows and columns specified above.
      * Controls may cover any rectangular area.
      * Do not try drawing non-rectangular shapes. */
-        ".   .   .   .   .   .   .   .   .   .   .   .   .  .  .  .  "
-        ".   .   .   .   .   .   .   .   .   .   .   .   .  .  .  .  "
-        ".   .   .   .   .   .   .   .   .   .   .   .   .  .  .  .  "
-        ".   .   .   .   .   .   .   .   .   .   .   .   .  .  .  .  "
-        ".   dp  dp  dp  dp  .   .   .   .   .   .   .   .  b2 b2 .  "
-        ".   dp  dp  dp  dp  .   .   .   .   .   .   .   .  b2 b2 .  "
-        ".   dp  dp  dp  dp  .   .   .   .   .   .   b1 b1  .  .  .  "
-        ".   dp  dp  dp  dp  .   .   .   .   .   .   b1 b1  .  .  .  "
-        ".   .   .   .   .   .   .   .   .   .   .   .   .  .  .  .  "
+ ".  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  "
+ ".  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  "
+ ".  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  "
+ ".  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  "
+ ".  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  "
+ ".  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  "
+ ".  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  "
+ ".  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  "
+ ".  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  "
+ ".  dp dp dp dp dp dp dp dp .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  b2 b2 b2 b2 .  "
+ ".  dp dp dp dp dp dp dp dp .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  b2 b2 b2 b2 .  "
+ ".  dp dp dp dp dp dp dp dp .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  b2 b2 b2 b2 .  "
+ ".  dp dp dp dp dp dp dp dp .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  b2 b2 b2 b2 .  "
+ ".  dp dp dp dp dp dp dp dp .  .  .  .  .  .  .  .  .  .  .  .  .  .  b1 b1 b1 b1 .  .  .  .  .  "
+ ".  dp dp dp dp dp dp dp dp .  .  .  .  .  .  .  .  .  .  .  .  .  .  b1 b1 b1 b1 .  .  .  .  .  "
+ ".  dp dp dp dp dp dp dp dp .  .  .  .  .  .  .  .  .  .  .  .  .  .  b1 b1 b1 b1 .  .  .  .  .  "
+ ".  dp dp dp dp dp dp dp dp .  .  .  .  .  .  .  .  .  .  .  .  .  .  b1 b1 b1 b1 .  .  .  .  .  "
+ ".  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  "
         ;
         /* Possible values:
          * j1, j2, j3... for joystick (returns to center when released);

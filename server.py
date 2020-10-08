@@ -16,7 +16,7 @@ from aiortc import RTCPeerConnection, RTCSessionDescription, MediaStreamTrack, V
 from aiortc.contrib.media import MediaPlayer
 
 import numpy as np
-import cv2
+#import cv2
 from av import VideoFrame
 
 from mss import mss #fast screen-shots
@@ -275,7 +275,6 @@ async def offer(request):
                 print("Freeing joystick:{}".format(jsdev.idx))
                 jslist[jslist.index(jsdev)] = jsdev._replace(locked =  False)
             pcs.remove(pc)
-          
 
 
     # handle offer
@@ -284,7 +283,6 @@ async def offer(request):
     for t in pc.getTransceivers():
         if t.kind == "video":
             pc.addTrack(VideoImageTrack())
-    
 
 
     # send answer
