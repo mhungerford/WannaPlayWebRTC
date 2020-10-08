@@ -158,25 +158,8 @@ class VideoImageTrack(VideoStreamTrack):
 
 
 async def index(request):
-    content = open(os.path.join(ROOT, "index.html"), "r").read()
+    content = open(os.path.join(ROOT, "public_html/index.html"), "r").read()
     return web.Response(content_type="text/html", text=content)
-
-
-async def javascript(request):
-    content = open(os.path.join(ROOT, "client.js"), "r").read()
-    return web.Response(content_type="application/javascript", text=content)
-
-async def basecss(request):
-    content = open(os.path.join(ROOT, "base.css"), "r").read()
-    return web.Response(content_type="application/javascript", text=content)
-
-async def basejs(request):
-    content = open(os.path.join(ROOT, "base.js"), "r").read()
-    return web.Response(content_type="application/javascript", text=content)
-
-async def dpadcss(request):
-    content = open(os.path.join(ROOT, "dpad.css"), "r").read()
-    return web.Response(content_type="application/javascript", text=content)
 
 
 async def offer(request):
@@ -378,12 +361,8 @@ if __name__ == "__main__":
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/", index)
-    app.router.add_get("/client.js", javascript)
-    app.router.add_get("/base.js", basejs)
-    app.router.add_get("/base.css", basecss)
-    app.router.add_get("/dpad.css", dpadcss)
-    app.add_routes([web.static('/img','img')])
-
+    app.add_routes([web.static('/', 'public_html')])
+    app.add_routes([web.static('/img','public_html/img')])
     app.router.add_post("/offer", offer)
 
     #web.run_app(app, host=args.host, port=args.port, ssl_context=ssl_context)
