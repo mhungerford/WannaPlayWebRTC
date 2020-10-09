@@ -105,14 +105,17 @@
    </script>
 
 <div id="option">
-   <button id="start" onclick="document.getElementById('mjpeg').src='http://192.168.1.126:8100/?action=snapshot';loadPad('dpad.css');start()">Request Turn</button>
+   <!--button id="start" onclick="document.getElementById('mjpeg').src='http://192.168.1.126:8100/?action=snapshot';loadPad('dpad.css');start()">Request Turn</button-->
+  <button id="start" onclick="loadPad('dpad.css');start()">Request Turn</button>
    <button id="stop" style="display: none" onclick="stop()">Stop</button>
    <button id="fullscreen" onclick="toggleFullScreen()">FullScreen</button>
 </div>
 
+<!--
 <div id="media">
    <img id="mjpeg" src="http://192.168.1.126:8100/?action=stream" />
 </div>
+-->
 
 <div>
    <video id="video" autoplay="false" playsinline="true" />

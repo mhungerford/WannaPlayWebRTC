@@ -1,0 +1,12 @@
+wheel
+aiortc
+aiohttp
+av
+numpy
+uvloop
+EasyProcess
+Pillow
+mss
+python-uinput
+python-xlib
+uvloop

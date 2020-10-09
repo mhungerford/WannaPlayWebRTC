@@ -190,6 +190,25 @@ async def offer(request):
       def on_datachannel(channel):
           print("Channel id: {}".format(channel.id))
           #print("queue position: {}".format(pcs.index(pc)))
+          #This transport monitor is necessary, otherwise
+          #a closed connection breaks the server on the next connection
+          async def monitor():
+            while True:
+              if channel.transport.transport.state == "closed":
+                await pc.close()
+                js = getattr(pc, 'js', None)
+                if js is not None:
+                  jsdev = next((x for x in jslist if x.dev == js), None)
+                  if jsdev is not None:
+                    print("Freeing joystick:{}".format(jsdev.idx))
+                    jslist[jslist.index(jsdev)] = jsdev._replace(locked =  False)
+                try:
+                  pcs.remove(pc)
+                except ValueError:
+                  pass
+                break 
+              await asyncio.sleep(5)
+          asyncio.ensure_future(monitor())
 
           @channel.on("close")
           def on_close():
@@ -233,7 +252,10 @@ async def offer(request):
               if jsdev is not None:
                 print("Freeing joystick:{}".format(jsdev.idx))
                 jslist[jslist.index(jsdev)] = jsdev._replace(locked =  False)
-            pcs.remove(pc)
+            try:
+              pcs.remove(pc)
+            except ValueError:
+              pass
 
 
     # handle offer
@@ -280,7 +302,7 @@ if __name__ == "__main__":
         help="Set sdl window size (w h) for launch-sdl-app.")
     parser.add_argument("--enable-virtual-keyboard", action="store_true", 
         help="Use sdl event injector for virtual keys. (requires --launch-sdl-app)")
-    parser.add_argument("--enable_waitlist", type=int, default=4,
+    parser.add_argument("--enable-waitlist", type=int, default=4,
         help="Enable Waitlist and queue size (default: 4 for joysticks, 2 for keyboard)")
     parser.add_argument("--number-of-players", type=int, default=4,
         help="How many controllers to allocate (default: 4 for joysticks, 2 for keyboard)")
@@ -310,6 +332,7 @@ if __name__ == "__main__":
       #don't use numbers in Yoke name
       for idx in range(0, args.number_of_players):
         jslist.append(JSDev(yoke.Device(idx + 1, 'Yoke', events), False, idx + 1))
+        sleep(0.1) #need some delay, otherwise not in correct order
       #send non-pressed buttons for all virtual joystics
       for jsdev in jslist:
         for event in events:
@@ -333,6 +356,9 @@ if __name__ == "__main__":
       os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
       #need to configure our joystick if using our own pico-8 config
       os.environ["SDL_GAMECONTROLLERCONFIG"] = "06000000596f6b650000000000000000,Yoke,platform:Linux,a:b0,b:b1,dpup:b2,dpdown:b3,dpleft:b4,dpright:b5,"
+      #only necessary for arm due to pico-8 forcing non-windowed
+      if [ os.uname().machine == 'armv7l' ]:
+        os.environ["LD_LIBRARY_PATH"] = os.path.join(ROOT, "tsi")
 
       #move into /tmp/sdl directory to have sdl image dumps there
       cwd = os.getcwd()
@@ -340,9 +366,11 @@ if __name__ == "__main__":
         os.mkdir("/tmp/sdl")
       os.chdir("/tmp/sdl")
 
+      tsi_binary = 'tsi_{}_{}'.format(os.uname().sysname, os.uname().machine)
+
       #requires remotekb_wrap in launch for sdlkbdsim use
       proc = EasyProcess(
-        os.path.join(ROOT, "tsi/tsi") +
+        os.path.join(ROOT, "tsi/{}".format(tsi_binary)) +
         " -windowed 1" +
         " -width 128" +
         " -height 128" +

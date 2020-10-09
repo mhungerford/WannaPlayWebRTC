@@ -76,8 +76,8 @@ function start() {
 
     pc = new RTCPeerConnection(config);
 
-    // Create Data Channel
-   dc = pc.createDataChannel('chat', {"ordered": false, "maxRetransmits": 0});
+    // Create Data Channel (reliable)
+   dc = pc.createDataChannel('chat', {"ordered": true});
    dc.onclose = function() {
       clearInterval(dcInterval);
    };
@@ -137,8 +137,9 @@ function stop() {
                 transceiver.stop();
             }
         });
-        vc = null;
     }
+        
+    vc = null;
 
     // close peer connection
     setTimeout(function() {

@@ -11,6 +11,12 @@ echo "Adding new user group called \"uinput\""
 sudo groupadd uinput
 sudo gpasswd -a $USER uinput
 
+#install the uinput module
+if grep uinput /etc/modules-load.d/modules.conf &>/dev/null; then
+   sudo bash -c "echo uinput >> /etc/modules-load.d/modules.conf"
+   sudo modprobe uinput
+fi
+
 echo "Copying rules to /etc/udev/rules.d/"
 sudo tee /etc/udev/rules.d/40-uinput-yoke.rules > /dev/null << 'EOF'
 KERNEL=="uinput", MODE="0660", GROUP="uinput"
