@@ -224,6 +224,7 @@ async def offer(request):
           @channel.on("message")
           def on_message(message):
               if isinstance(message, str) and message.startswith("ping"):
+                try:
                   #we use the 1 a second ping as heartbeat (and query)
                   channel.send("pong" + message[4:])
                   # if they don't have a js, and one is available
@@ -235,6 +236,8 @@ async def offer(request):
                       jslist[jslist.index(jsdev)] = jsdev._replace(locked = True)
                       #trigger to start a direct webrtc video feed (low latency)
                       channel.send("start")
+                except ConnectionError:
+                  pass
             
               elif isinstance(message, str) and message.startswith("controller: "):
                   vals = message[12:].split(',')
