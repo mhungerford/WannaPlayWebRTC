@@ -81,10 +81,6 @@
     z-index: 2;
 }
 
-div {
-    background-size: 100% 100%;
-}
-
 .control { z-index: 2; }
 
 /* Joysticks */

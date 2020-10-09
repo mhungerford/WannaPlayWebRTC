@@ -1,7 +1,7 @@
 <html>
 <head>
     <meta charset="UTF-8"/>
-    <meta name="viewport" content='width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;' />
+    <meta name="viewport" content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' />
     <link rel="stylesheet" type="text/css" href="base.css" />
 
     <title>Web4Player</title>
@@ -22,6 +22,18 @@
        height: 100%;
     }
 
+    #make_url {
+       position: fixed;
+       color: yellow;
+       bottom: 10px;
+       left: 0;
+       width: 100%;
+       text-align: center;
+       font-weight: bolder;
+       font-size: large;
+       text-shadow: -2px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
+    }
+
     #option {
         position: relative;
         margin: 6px auto;
@@ -38,6 +50,7 @@
        top: 40%;
        left: 50%;
        transform: translate(-50%, -40%);
+       display: none;
        width: 72%;
        height: 72%;
        opacity: 1;
@@ -106,6 +119,57 @@
        }
    </script>
 
+   <script>
+         var document = window.document;
+         document.addEventListener('keydown', function(event) {
+            // Notice: event.repeat broken on Firefox-X11 (causes more events)
+            if (event.repeat || dc == null) { return; }
+            switch(event.code) {
+               case 'KeyZ':
+                  dc.send("keydn: " + 'z');
+                  break;
+               case 'KeyX':
+                  dc.send("keydn: " + 'x');
+                  break;
+               case 'ArrowLeft':
+                  dc.send("keydn: " + 'l');
+                  break;
+               case 'ArrowRight':
+                  dc.send("keydn: " + 'r');
+                  break;
+               case 'ArrowUp':
+                  dc.send("keydn: " + 'u');
+                  break;
+               case 'ArrowDown':
+                  dc.send("keydn: " + 'd');
+                  break;
+            }
+         });
+         document.addEventListener('keyup', function(event) {
+            if (dc == null) { return; }
+            switch(event.code) {
+               case 'KeyZ':
+                  dc.send("keyup: " + 'z');
+                  break;
+               case 'KeyX':
+                  dc.send("keyup: " + 'x');
+                  break;
+               case 'ArrowLeft':
+                  dc.send("keyup: " + 'l');
+                  break;
+               case 'ArrowRight':
+                  dc.send("keyup: " + 'r');
+                  break;
+               case 'ArrowUp':
+                  dc.send("keyup: " + 'u');
+                  break;
+               case 'ArrowDown':
+                  dc.send("keyup: " + 'd');
+                  break;
+            }
+         });
+   </script>
+
 <div id="option">
    <!--button id="start" onclick="document.getElementById('mjpeg').src='http://192.168.1.126:8100/?action=snapshot';loadPad('dpad.css');start()">Request Turn</button-->
   <button id="start" onclick="loadPad('dpad.css');start()">Request Turn</button>
@@ -128,6 +192,11 @@
 </div>
 -->
    
+
+<a id="make_url" href="https://makeprojects.com/project/retro-future-remote-play">
+   https://makeprojects.com/project/retro-future-remote-play
+</a>
+
 <div id="joypad"/>
 
 <script src="client.js"></script>

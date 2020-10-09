@@ -244,6 +244,17 @@ async def offer(request):
                   if getattr(pc, 'js', None) is not None:
                     jsupdate_vals(pc.js, vals)
 
+              elif isinstance(message, str) and message.startswith("key"):
+                  print(message)
+                  direction = message[3]
+                  key = message[7]
+                  dval = 1 if direction == "d" else 0
+                  keys = ['z','x','u','l','d','r']
+                  kpos = keys.index(key)
+                  if getattr(pc, 'js', None) is not None:
+                    pc.js.emit(events[kpos], int(dval))
+                    pc.js.flush()
+
       @pc.on("iceconnectionstatechange")
       async def on_iceconnectionstatechange():
           print("ICE connection state is %s" % pc.iceConnectionState)

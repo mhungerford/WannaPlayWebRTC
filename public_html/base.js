@@ -209,6 +209,7 @@ function Control(type, id, updateStateCallback) {
     this.element = document.createElement('div');
     this.element.className = 'control ' + type;
     this.element.id = id;
+    this.element.style['background-size'] = '100% 100%';
     this.element.style.gridArea = id;
     this.gridArea = id;
     this.updateStateCallback = updateStateCallback;
