@@ -33,10 +33,18 @@ class SdlKbdSim():
     self.send_sdl_event(self.keylist[idx][0], self.keylist[idx][1], pressed)
     self.shared_keyboard_array[idx] = pressed
 
+  def sendstr(self, text):
+    for i, k in enumerate(text):
+      self.sendkey(k)
+
+  def sendkey(self, key, code=0, kmod=0):
+    self.send_sdl_event(key, code, 1, kmod=kmod)
+    self.send_sdl_event(key, code, 0, kmod=kmod)
+
   # b=int8, i=int32, I=uint32, 
   # type, ts, wid, state, repeat, padding, scancode, sym, mod, padding
   #look to repeat every 30 ms
-  def send_sdl_event(self, key, code, state, repeat=0):
+  def send_sdl_event(self, key, code, state, repeat=0, kmod=0):
     etype = 0x0300 if state else 0x0301
     sdlevent = struct.pack("iiibbhiihhi6i",
       etype, #0x0300, #type 0x0300 keydown, 0x0301 keyup
@@ -46,7 +54,7 @@ class SdlKbdSim():
       0, #short padding
       code, #scancode
       key, #sym
-      0, #short mod (ie. ctrl+alt)
+      kmod, #short mod (ie. ctrl+alt)
       0, #short mod padding (missing from header)
       0, #key padding
       0,0,0,0,0,0) #24 bytes padding

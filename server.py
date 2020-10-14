@@ -64,6 +64,10 @@ events = [
 jslist = []
 JSDev = namedtuple("JSDev",['dev', 'locked', 'idx'])
 
+#list of pico8 games to switch between in pico mode
+gamelist = ['painters', 'doodle_jump', 'they_started_it', 'heman']
+gameidx = 0
+
 def jsupdate_vals(js, vals):
   if isinstance(js, yoke.Device):
     for idx, state in enumerate(vals):
@@ -245,7 +249,6 @@ async def offer(request):
                     jsupdate_vals(pc.js, vals)
 
               elif isinstance(message, str) and message.startswith("key"):
-                  print(message)
                   direction = message[3]
                   key = message[7]
                   dval = 1 if direction == "d" else 0
@@ -254,6 +257,22 @@ async def offer(request):
                   if getattr(pc, 'js', None) is not None:
                     pc.js.emit(events[kpos], int(dval))
                     pc.js.flush()
+              elif isinstance(message, str) and message.startswith("gamectl: switch"):
+                  #special game control just for pico-8 (for now)
+                  gameidx = (gameidx + 1) % len(gamelist)
+                  nextgame = gamelist[gameidx]
+                  try: 
+                    os.symlink('tsi/data_{}.pod'.format(nextgame), 'tsi/data_tmp.pod')
+                    os.replace('tsi/data_tmp.pod', 'tsi/data.pod')
+                  except FileExistsError:
+                    pass
+                  #sendkeys CTRL+R 'reload' (super ugly CTRL down, then R, then up, up)
+                  #even uglier, need to send a couple of times to ensure it gets caught
+                  for _ in  range(6):
+                    self.send_sdl_event(0x400000e0, 0xe0, 1, kmod=kmod)
+                    self.send_sdl_event(ord('r'), 0x15, 1, kmod=kmod)
+                    self.send_sdl_event(0x400000e0, 0xe0, 0, kmod=kmod)
+                    self.send_sdl_event(ord('r'), 0x15, 0, kmod=kmod)
 
       @pc.on("iceconnectionstatechange")
       async def on_iceconnectionstatechange():

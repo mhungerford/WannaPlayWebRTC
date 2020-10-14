@@ -11,6 +11,8 @@
        touch-action: none;
        user-select: none;
        -webkit-user-select: none;
+       height: 100%;
+       padding-bottom: 1px;
     }
 
     body {
@@ -72,6 +74,17 @@
        object-fit: cover;
     }
 
+    #camvideo {
+       position: absolute;
+       top: 50%;
+       left: 50%;
+       transform: translate(-50%, -50%);
+       width: 85%;
+       height: 85%;
+       opacity: 1;
+       object-fit: contain;
+    }
+
     #mjpeg {
        position: absolute;
        top: 0;
@@ -103,20 +116,30 @@
     <script>
        // ToggleFullScreen from Mozilla examples
        // developer.mozilla.org/en-US/docs/Web/API/Fullscreen_API
-       function toggleFullScreen() {
+       function toggleFullScreen(fs) {
           var doc = window.document;
           var docEl = doc.documentElement;
 
           var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
           var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
 
-          if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+          if (fs) {
              requestFullScreen.call(docEl);
-          }
-          else {
+          } else {
              cancelFullScreen.call(doc);
           }
        }
+
+      window.screen.orientation.addEventListener("change", function () {
+            console.log("orentation:" + screen.orientation.type);
+            if (screen.orientation.type === "landscape-primary") {
+               console.log("going fullscreen");
+               toggleFullScreen(true);
+            } else if (screen.orientation.type === "portrait-primary") {
+               console.log("going windowed");
+               toggleFullScreen(false);
+            }
+      });
    </script>
 
    <script>
@@ -166,15 +189,17 @@
                case 'ArrowDown':
                   dc.send("keyup: " + 'd');
                   break;
+               case 'Backslash':
+                  dc.send("gamectl: " + 'switch');
+                  break;
             }
          });
    </script>
 
 <div id="option">
    <!--button id="start" onclick="document.getElementById('mjpeg').src='http://192.168.1.126:8100/?action=snapshot';loadPad('dpad.css');start()">Request Turn</button-->
-  <button id="start" onclick="loadPad('dpad.css');start()">Request Turn</button>
+   <button id="start" onclick="loadPad('dpad.css');start();">Request Turn</button>
    <button id="stop" style="display: none" onclick="stop()">Stop</button>
-   <button id="fullscreen" onclick="toggleFullScreen()">FullScreen</button>
 </div>
 
 <!--
@@ -182,6 +207,12 @@
    <img id="mjpeg" src="http://192.168.1.126:8100/?action=stream" />
 </div>
 -->
+
+<div>
+   <video id="camvideo" autoplay="true" loop muted playsinline="true">
+      <source src="prerecorded.mp4"/>
+   </video>
+</div>
 
 <div>
    <video id="video" autoplay="false" playsinline="true" />
