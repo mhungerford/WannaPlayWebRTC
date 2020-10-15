@@ -1,7 +1,10 @@
 #!/bin/bash
 
 #enable uinput based virtual joysticks
-./yoke-enable-uinput.sh
+./src/yoke/yoke-enable-uinput.sh
+
+#install all ubuntu apt packages
+sed 's/#.*//' apt-packages.txt | xargs sudo apt-get install
 
 #create local virtualenv
 if [ ! -d venv ]; then

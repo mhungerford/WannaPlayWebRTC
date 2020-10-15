@@ -1,0 +1,17 @@
+python3-pip
+python3-venv
+libsdl2-2.0
+libpulse0
+miniupnpc
+libsrtp2-dev
+ffmpeg
+libavdevice-dev libavfilter-dev libopus-dev libvpx-dev pkg-config
+libatlas-base-dev #fixes numpy on rpi
+
+#only for pi
+#wiringpi
+
+#only required for building python packages
+#python3-dev
+#build-essential
+#libffi-dev
