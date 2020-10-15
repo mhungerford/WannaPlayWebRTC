@@ -24,11 +24,11 @@ from PIL import Image
 import numpy as np
 
 #grab window support (for apps launched prior to this server)
-from grabwindow import GrabWindow
+from src.grabwindow import GrabWindow
 
 #Virtual Joystick or Virtual Keyboard dependencies
-import yoke # requires uinput and udev.rules (ie. root) (supports 4 controllers)
-from sdlkbdsim import SdlKbdSim # requires sdlwrap binary use (supports keyboard)
+from src.yoke import yoke # requires uinput and udev.rules (ie. root) (supports 4 controllers)
+from src.sdlkbdsim import SdlKbdSim # requires sdlwrap binary use (supports keyboard)
 
 # optional, for better performance than asyncio default loop
 try:

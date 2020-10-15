@@ -1,6 +1,6 @@
 from platform import system
 
-import yoke_events as EVENTS
+from . import yoke_events as EVENTS
 
 ALIAS_TO_EVENT = {
     'j1':  'ABS_X,ABS_Y',
