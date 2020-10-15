@@ -6,16 +6,15 @@
 
     <title>Web4Player</title>
     <style>
-
     html {
        touch-action: none;
        user-select: none;
        -webkit-user-select: none;
        height: 100%;
-       padding-bottom: 1px;
     }
 
     body {
+       touch-action: none;
        margin: 0;
        padding: 0;
        overflow: hidden;
@@ -64,16 +63,6 @@
             drop-shadow(4px 0 0 black);
     }
 
-    #video2 {
-       position: absolute;
-       top: 0;
-       left: 0;
-       width: 100%;
-       height: 100%;
-       opacity: 1;
-       object-fit: cover;
-    }
-
     #camvideo {
        position: absolute;
        top: 50%;
@@ -83,16 +72,6 @@
        height: 85%;
        opacity: 1;
        object-fit: contain;
-    }
-
-    #mjpeg {
-       position: absolute;
-       top: 0;
-       left: 0;
-       width: 100%;
-       height: 100%;
-       opacity: 1;
-       object-fit: cover;
     }
 
     #media {
@@ -108,7 +87,7 @@
     }
     </style>
 </head>
-<!--body onload="loadPad('dpad.css')"-->
+
 <body>
     <script src="touch-emulator.js"></script>
     <script> TouchEmulator(); </script>
@@ -194,19 +173,25 @@
                   break;
             }
          });
+
+
+         function start() {
+            document.getElementById('camvideo').pause();
+            loadPad('dpad.css');
+            webrtcStart();
+         }
+
+         function stop() {
+            webrtcStop();
+            document.getElementById('camvideo').play();
+         }
+
    </script>
 
 <div id="option">
-   <!--button id="start" onclick="document.getElementById('mjpeg').src='http://192.168.1.126:8100/?action=snapshot';loadPad('dpad.css');start()">Request Turn</button-->
-   <button id="start" onclick="loadPad('dpad.css');start();">Request Turn</button>
+   <button id="start" onclick="start();">Request Turn</button>
    <button id="stop" style="display: none" onclick="stop()">Stop</button>
 </div>
-
-<!--
-<div id="media">
-   <img id="mjpeg" src="http://192.168.1.126:8100/?action=stream" />
-</div>
--->
 
 <div>
    <video id="camvideo" autoplay="true" loop muted playsinline="true">
@@ -214,15 +199,10 @@
    </video>
 </div>
 
+
 <div>
-   <video id="video" autoplay="false" playsinline="true" />
+   <video id="video" autoplay="false" muted playsinline="true" />
 </div>
-<!--
-<div>
-   <video id="video2" autoplay="true" loop muted playsinline="true" src="img/drivetest.mp4" />
-</div>
--->
-   
 
 <a id="make_url" href="https://makeprojects.com/project/retro-future-remote-play">
    https://makeprojects.com/project/retro-future-remote-play

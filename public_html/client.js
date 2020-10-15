@@ -63,7 +63,7 @@ function addVideo() {
    }
 }
 
-function start() {
+function webrtcStart() {
     // New session uuid each start
     uuid = uuidv4();
     
@@ -120,7 +120,7 @@ function start() {
     document.getElementById('stop').style.display = 'inline-block';
 }
 
-function stop() {
+function webrtcStop() {
     document.getElementById('stop').style.display = 'none';
     document.getElementById('video').style.display = 'none';
     document.getElementById('joypad').style.display = 'none';
