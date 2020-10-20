@@ -262,8 +262,8 @@ async def offer(request):
                   gameidx = (gameidx + 1) % len(gamelist)
                   nextgame = gamelist[gameidx]
                   try: 
-                    os.symlink('tsi/data_{}.pod'.format(nextgame), 'tsi/data_tmp.pod')
-                    os.replace('tsi/data_tmp.pod', 'tsi/data.pod')
+                    os.symlink('pico8/data_{}.pod'.format(nextgame), 'pico8/data_tmp.pod')
+                    os.replace('pico8/data_tmp.pod', 'pico8/data.pod')
                   except FileExistsError:
                     pass
                   #sendkeys CTRL+R 'reload' (super ugly CTRL down, then R, then up, up)
@@ -389,9 +389,14 @@ if __name__ == "__main__":
       os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
       #need to configure our joystick if using our own pico-8 config
       os.environ["SDL_GAMECONTROLLERCONFIG"] = "06000000596f6b650000000000000000,Yoke,platform:Linux,a:b0,b:b1,dpup:b2,dpdown:b3,dpleft:b4,dpright:b5,"
+
+      #enable sdl wrapper for sdlkbdsim and other sdl tweaks
+      os.environ["LD_PRELOAD"] = os.path.join(ROOT, "pico8/sdlwrap.so")
+      os.environ["REMOTEKB_PORT"] = "4321"
       #only necessary for arm due to pico-8 forcing non-windowed
       if [ os.uname().machine == 'armv7l' ]:
-        os.environ["LD_LIBRARY_PATH"] = os.path.join(ROOT, "tsi")
+        os.environ["LD_LIBRARY_PATH"] = os.path.join(ROOT, "pico8")
+        os.environ["REMOTEKB_LIBSDL_PATH"] = "/usr/lib/arm-linux-gnueabihf/libSDL2.so"
 
       #move into /tmp/sdl directory to have sdl image dumps there
       cwd = os.getcwd()
@@ -399,11 +404,11 @@ if __name__ == "__main__":
         os.mkdir("/tmp/sdl")
       os.chdir("/tmp/sdl")
 
-      tsi_binary = 'tsi_{}_{}'.format(os.uname().sysname, os.uname().machine)
+      pico8_binary = 'runner_{}_{}'.format(os.uname().sysname, os.uname().machine)
 
       #requires remotekb_wrap in launch for sdlkbdsim use
       proc = EasyProcess(
-        os.path.join(ROOT, "tsi/{}".format(tsi_binary)) +
+        os.path.join(ROOT, "pico8/{}".format(pico8_binary)) +
         " -windowed 1" +
         " -width 128" +
         " -height 128" +
