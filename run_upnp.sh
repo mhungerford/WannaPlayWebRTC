@@ -5,10 +5,10 @@ source venv/bin/activate
 
 #open the ports via port forwarding using PNP
 #apt get install miniupnpc
-upnpc -r 8554 UDP 8554 UDP
-upnpc -r 8554 TCP 8554 TCP
+upnpc -r 8080 UDP 8080 UDP
+upnpc -r 8080 TCP 8080 TCP
 
-python3 server.py --port 8554 --number-of-players 1 --enable-waitlist 4
+python3 server.py --port 8080 --number-of-players 2 --enable-waitlist 4
 
-upnpc -d 8554 UDP
-upnpc -d 8554 TCP
+upnpc -d 8080 UDP
+upnpc -d 8080 TCP
