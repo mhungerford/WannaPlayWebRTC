@@ -24,11 +24,11 @@ from PIL import Image
 import numpy as np
 
 #grab window support (for apps launched prior to this server)
-from src.grabwindow import GrabWindow
+from grabwindow import GrabWindow
 
 #Virtual Joystick or Virtual Keyboard dependencies
-from src.yoke import yoke # requires uinput and udev.rules (ie. root) (supports 4 controllers)
-from src.sdlkbdsim import SdlKbdSim # requires sdlwrap binary use (supports keyboard)
+from yoke import yoke # requires uinput and udev.rules (ie. root) (supports 4 controllers)
+from sdlkbdsim import SdlKbdSim # requires sdlwrap binary use (supports keyboard)
 
 # optional, for better performance than asyncio default loop
 try:
@@ -38,7 +38,7 @@ try:
 except ImportError:
     pass
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 #list of Peer Connections to track
 pcs = []
@@ -162,7 +162,7 @@ class VideoImageTrack(VideoStreamTrack):
 
 
 async def index(request):
-    content = open(os.path.join(ROOT, "public_html/index.html"), "r").read()
+    content = open(Path(PROJECT_ROOT, "public_html/index.html"), "r").read()
     return web.Response(content_type="text/html", text=content)
 
 
@@ -391,11 +391,12 @@ if __name__ == "__main__":
       os.environ["SDL_GAMECONTROLLERCONFIG"] = "06000000596f6b650000000000000000,Yoke,platform:Linux,a:b0,b:b1,dpup:b2,dpdown:b3,dpleft:b4,dpright:b5,"
 
       #enable sdl wrapper for sdlkbdsim and other sdl tweaks
-      os.environ["LD_PRELOAD"] = os.path.join(ROOT, "pico8/sdlwrap.so")
+      #sdlwrap_lib = 'sdlwrap_{}_{}.so'.format(os.uname().sysname, os.uname().machine)
+      #os.environ["LD_PRELOAD"] = str(PROJECT_ROOT / "pico8" / sdlwrap_lib)
       os.environ["REMOTEKB_PORT"] = "4321"
       #only necessary for arm due to pico-8 forcing non-windowed
-      if [ os.uname().machine == 'armv7l' ]:
-        os.environ["LD_LIBRARY_PATH"] = os.path.join(ROOT, "pico8")
+      if os.uname().machine == 'armv7l':
+        os.environ["LD_LIBRARY_PATH"] = str(PROJECT_ROOT / "pico8")
         os.environ["REMOTEKB_LIBSDL_PATH"] = "/usr/lib/arm-linux-gnueabihf/libSDL2.so"
 
       #move into /tmp/sdl directory to have sdl image dumps there
@@ -404,11 +405,12 @@ if __name__ == "__main__":
         os.mkdir("/tmp/sdl")
       os.chdir("/tmp/sdl")
 
-      pico8_binary = 'runner_{}_{}'.format(os.uname().sysname, os.uname().machine)
 
       #requires remotekb_wrap in launch for sdlkbdsim use
+      pico8_binary = 'runner_{}_{}'.format(os.uname().sysname, os.uname().machine)
+      print(str(PROJECT_ROOT / "pico8" / pico8_binary))
       proc = EasyProcess(
-        os.path.join(ROOT, "pico8/{}".format(pico8_binary)) +
+        str(PROJECT_ROOT / "pico8" / pico8_binary) +
         " -windowed 1" +
         " -width 128" +
         " -height 128" +
@@ -427,8 +429,8 @@ if __name__ == "__main__":
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/", index)
-    app.add_routes([web.static('/', 'public_html')])
-    app.add_routes([web.static('/img','public_html/img')])
+    app.add_routes([web.static('/', PROJECT_ROOT / 'public_html')])
+    app.add_routes([web.static('/img', PROJECT_ROOT / 'public_html/img')])
     app.router.add_post("/offer", offer)
 
     #web.run_app(app, host=args.host, port=args.port, ssl_context=ssl_context)
