@@ -8,7 +8,7 @@ source venv/bin/activate
 upnpc -r 8080 UDP 8080 UDP
 upnpc -r 8080 TCP 8080 TCP
 
-python3 server.py --port 8080 --number-of-players 2 --enable-waitlist 4
+python3 wannaplay/server.py --port 8080 --number-of-players 2 --enable-waitlist 4
 
 upnpc -d 8080 UDP
 upnpc -d 8080 TCP
