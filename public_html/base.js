@@ -198,7 +198,7 @@ function checkVibration() {
             delete vibrating[id];
         } else if (performance.now() > vibrating[id].time) {
             vibrating[id].time = vibrating[id].pulse + vibrating[id].pause + performance.now();
-            window.navigator.vibrate(vibrating[id].pulse);
+            if (window.navigator.vibrate) window.navigator.vibrate(vibrating[id].pulse);
         }
     }
     window.requestAnimationFrame(checkVibration);
@@ -274,7 +274,7 @@ Joystick.prototype.onTouch = function(ev) {
         var currentQuadrant = Math.atan2(this.state[1], this.state[0]) / Math.PI + 1.125; // rad ÷ pi, shifted 22.5 deg. [0.25, 2.25]
         currentQuadrant = Math.floor((currentQuadrant * 4) % 8); // [1, 9] → [1, 8)+[0, 1)
         if (VIBRATE_ON_QUADRANT_BOUNDARY && this.quadrant != -2 && this.quadrant != currentQuadrant) {
-            window.navigator.vibrate(VIBRATION_MILLISECONDS_OVER);
+            if (window.navigator.vibrate) window.navigator.vibrate(VIBRATION_MILLISECONDS_OVER);
         }
         this.quadrant = currentQuadrant;
     } else {
@@ -295,7 +295,7 @@ Joystick.prototype.onTouch = function(ev) {
 Joystick.prototype.onTouchStart = function(ev) {
     ev.preventDefault(); // Android Webview delays the vibration without this.
     this.onTouch(ev);
-    window.navigator.vibrate(VIBRATION_MILLISECONDS_IN);
+    if (window.navigator.vibrate) window.navigator.vibrate(VIBRATION_MILLISECONDS_IN);
 };
 Joystick.prototype.onTouchEnd = function() {
     if (!this.locking) {
@@ -376,7 +376,7 @@ Pedal.prototype.onAttached = function() {
 };
 Pedal.prototype.onTouchStart = function(ev) {
     ev.preventDefault(); // Android Webview delays the vibration without this.
-    window.navigator.vibrate(VIBRATION_MILLISECONDS_IN);
+    if (window.navigator.vibrate) window.navigator.vibrate(VIBRATION_MILLISECONDS_IN);
     this.onTouchMove(ev);
     this.element.classList.add('pressed');
 };
@@ -492,7 +492,7 @@ AnalogButton.prototype.onTouchMove = function(ev) {
     this.updateStateCallback();
     if (currentState != this.oldState &&
         Math.floor(currentState) >= Math.floor(this.oldState)) {
-        window.navigator.vibrate(VIBRATION_MILLISECONDS_IN);
+        if (window.navigator.vibrate) window.navigator.vibrate(VIBRATION_MILLISECONDS_IN);
     }
     this.oldState = currentState;
 };
@@ -543,7 +543,7 @@ Knob.prototype.onTouch = function(ev) {
     this.updateStateCallback();
     var currentQuadrant = Math.floor(this.state * 8);
     if (VIBRATE_ON_QUADRANT_BOUNDARY && this.quadrant != currentQuadrant) {
-        window.navigator.vibrate(VIBRATION_MILLISECONDS_OVER);
+        if (window.navigator.vibrate) window.navigator.vibrate(VIBRATION_MILLISECONDS_OVER);
     }
     this.quadrant = currentQuadrant;
     this.updateCircles();
@@ -553,7 +553,7 @@ Knob.prototype.onTouchStart = function(ev) {
     var pos = ev.targetTouches[0];
     this.initState = this.state - (Math.atan2(pos.clientY - this.offset.yCenter,
         pos.clientX - this.offset.xCenter) / (2 * Math.PI)) + 1;
-    window.navigator.vibrate(VIBRATION_MILLISECONDS_IN);
+    if (window.navigator.vibrate) window.navigator.vibrate(VIBRATION_MILLISECONDS_IN);
 };
 Knob.prototype.onTouchEnd = function() {
     this.updateStateCallback();
@@ -652,7 +652,7 @@ DPad.prototype.onTouchMove = function(ev) {
     var currentState = this.state.reduce(function(acc, cur) {return (acc << 1) + cur;}, 0);
     if (currentState != this.oldState) {
         this.oldState = currentState; this.updateButtons();
-        window.navigator.vibrate(VIBRATION_MILLISECONDS_DPAD);
+        if (window.navigator.vibrate) window.navigator.vibrate(VIBRATION_MILLISECONDS_DPAD);
     }
 };
 DPad.prototype.onTouchEnd = function() {
@@ -792,7 +792,7 @@ function recordPressure(ev) {
 // If the user's browser needs permission to vibrate
 // it's more convenient to ask for it first before entering fullscreen.
 // This is useful e.g. in Firefox for Android.
-window.navigator.vibrate(50);
+if (window.navigator.vibrate) window.navigator.vibrate(50);
 
 function loadPad(filename) {
     var head = document.head;

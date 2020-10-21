@@ -59,7 +59,10 @@
 
     #option {
         position: fixed;
-        margin: 6px auto;
+        margin-top: 6px;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
 	z-index: 100;
     }
 
@@ -144,6 +147,8 @@
 <body>
     <script src="touch-emulator.js"></script>
     <script> TouchEmulator(); </script>
+    <!-- For iOS 11 for missing flatMap -->
+    <script src="https://unpkg.com/array-flat-polyfill"></script>
     <script type="application/javascript" src="base.js"></script>
     <script>
        // ToggleFullScreen from Mozilla examples
@@ -221,7 +226,7 @@
                header.style.display = 'block';
                cover.style.display = 'block';
                var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
-               content.style.height = viewHeight;
+               content.style.height = '100%'; //viewHeight;
                document.body.style.height = '100% + ' + pad + 'px';
                document.body.style.overflow = 'visible';
                // listen to scroll to know when in minimal-ui mode.
@@ -314,9 +319,7 @@
 
    </script>
 
-    <div class="header">
-        <p>header zone</p>
-    </div>
+    <div class="header"></div>
     <div class="content">
 
 <div id="option">
@@ -349,6 +352,9 @@
 
     </div>
     <div class="cover">
+        <br>
+        <br>
+        <span style='font-size:100px;'>&#8679;</span>
         <p>Swipe Up to Fullscreen</p>
     </div>
 
