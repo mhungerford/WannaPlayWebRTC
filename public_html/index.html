@@ -187,12 +187,12 @@
             if( timeout ) clearTimeout(timeout);
 
             timeout = setTimeout(function() {
-                let header = document.querySelector('div.header');
-                let pad = header.style.height;
+                var header = document.getElementsByClassName('header')[0];
+                var pad = header.style.height;
                 if (window.scrollY >= 10) { //pad) {
                     console.log('locking scroll');
                     // hide the fixed scroll-cover
-                    let cover = document.querySelector('div.cover');
+                    var cover = document.getElementsByClassName('cover')[0];
                     cover.style.display = 'none';
                     // disables scrolling
                     document.body.style.overflow = 'hidden';
@@ -206,14 +206,14 @@
             var outerHeight = (window.outerHeight !== 0) ? window.outerHeight :
                document.body.getBoundingClientRect().height;
             offscreen = (window.innerHeight < outerHeight);
-            let header = document.querySelector('div.header');
-            let cover = document.querySelector('div.cover');
-            let content = document.querySelector('div.content');
+            var header = document.getElementsByClassName('header')[0];
+            var cover = document.getElementsByClassName('cover')[0];
+            var content = document.getElementsByClassName('content')[0];
 
             // Only do fullscreen swipe for landscape mode when content doesn't fill screen
             if (offscreen && (window.orientation === 90)) {
-               let pad = outerHeight - window.innerHeight;
-               header.style.height = pad;
+               var pad = outerHeight - window.innerHeight;
+               header.style.height = pad + 'px';
                console.log("pad: " + pad);
                console.log("innerHeight: " + window.innerHeight);
                console.log("outerHeight: " + outerHeight);
@@ -236,10 +236,9 @@
             }
          }
 
-         window.onload=() => {
+         window.addEventListener('load', function (event) {
             if (isIOS) setTimeout(function() {configureSwipeUp();}, 500);
-
-         }
+         });
 
          window.addEventListener("orientationchange", function (ev) {
             if (isIOS) setTimeout(function() {configureSwipeUp();}, 500);
