@@ -264,8 +264,8 @@ Joystick.prototype.onAttached = function() {
 Joystick.prototype.onTouch = function(ev) {
     var pos = ev.targetTouches[0];
     this.state = [
-        (pos.pageX - this.offset.xCenter) / this.offset.halfWidth,
-        (pos.pageY - this.offset.yCenter) / this.offset.halfHeight
+        (pos.clientX - this.offset.xCenter) / this.offset.halfWidth,
+        (pos.clientY - this.offset.yCenter) / this.offset.halfHeight
     ];
     var distance = Math.max(Math.abs(this.state[0]), Math.abs(this.state[1]));
     if (distance < 1) {
@@ -384,7 +384,7 @@ Pedal.prototype.onTouchMove = function(ev) {
     // This is the default handler, which uses the Y-coordinate to control the pedal.
     // This function is overwritten if the user confirms the screen can detect touch pressure:
     var pos = ev.targetTouches[0];
-    this.state = truncate((this.offset.y - pos.pageY) / this.offset.height + 1);
+    this.state = truncate((this.offset.y - pos.clientY) / this.offset.height + 1);
     if (this.state == 0.999999) {
         queueForVibration(this.element.id, VIBRATION_MILLISECONDS_SATURATION);
     } else {
@@ -444,8 +444,8 @@ AnalogButton.prototype.processTouches = function() {
     for (var id in this.currentTouches) {
         var touch = this.currentTouches[id];
         this.state = Math.max(this.state, truncate(ANALOG_BUTTON_DEADZONE_CONSTANT * Math.min(
-            1 - Math.abs((touch.pageY - this.offset.yCenter) / this.offset.halfHeight),
-            1 - Math.abs((touch.pageX - this.offset.xCenter) / this.offset.halfWidth)
+            1 - Math.abs((touch.clientY - this.offset.yCenter) / this.offset.halfHeight),
+            1 - Math.abs((touch.clientX - this.offset.xCenter) / this.offset.halfWidth)
         )));
     }
     if (this.state == 0.000001) {
@@ -460,8 +460,8 @@ AnalogButton.prototype.processTouchesForce = function() {
     this.state = 0.000001;
     for (var id in this.currentTouches) {
         var touch = this.currentTouches[id];
-        if (touch.pageX > this.offset.x && touch.pageX < this.offset.xMax &&
-            touch.pageY > this.offset.y && touch.pageY < this.offset.yMax) {
+        if (touch.clientX > this.offset.x && touch.clientX < this.offset.xMax &&
+            touch.clientY > this.offset.y && touch.clientY < this.offset.yMax) {
             this.state = Math.max(this.state, truncate((touch.force - minForce) / (maxForce - minForce)));
         }
     }
@@ -482,8 +482,8 @@ AnalogButton.prototype.onTouchMove = function(ev) {
     var currentState = this.neighbors.map(function(el) {
         Array.from(ev.changedTouches, function(touch) {
             this.currentTouches['t' + touch.identifier] = {
-                pageX: touch.pageX,
-                pageY: touch.pageY,
+                clientX: touch.clientX,
+                clientY: touch.clientY,
                 force: touch.force
             };
         }, el);
@@ -538,8 +538,8 @@ Knob.prototype.onTouch = function(ev) {
     // The knob now increments the state proportionally to the turned angle.
     // This requires subtracting the current angular position from the position at onTouchStart
     // A real knob turns the same way no matter where you touch it.
-    this.state = (this.initState + (Math.atan2(pos.pageY - this.offset.yCenter,
-        pos.pageX - this.offset.xCenter)) / (2 * Math.PI)) % 1;
+    this.state = (this.initState + (Math.atan2(pos.clientY - this.offset.yCenter,
+        pos.clientX - this.offset.xCenter)) / (2 * Math.PI)) % 1;
     this.updateStateCallback();
     var currentQuadrant = Math.floor(this.state * 8);
     if (VIBRATE_ON_QUADRANT_BOUNDARY && this.quadrant != currentQuadrant) {
@@ -551,8 +551,8 @@ Knob.prototype.onTouch = function(ev) {
 Knob.prototype.onTouchStart = function(ev) {
     ev.preventDefault(); // Android Webview delays the vibration without this.
     var pos = ev.targetTouches[0];
-    this.initState = this.state - (Math.atan2(pos.pageY - this.offset.yCenter,
-        pos.pageX - this.offset.xCenter) / (2 * Math.PI)) + 1;
+    this.initState = this.state - (Math.atan2(pos.clientY - this.offset.yCenter,
+        pos.clientX - this.offset.xCenter) / (2 * Math.PI)) + 1;
     window.navigator.vibrate(VIBRATION_MILLISECONDS_IN);
 };
 Knob.prototype.onTouchEnd = function() {
@@ -592,8 +592,8 @@ Button.prototype.processTouches = function() {
     this.state = 0;
     for (var id in this.currentTouches) {
         var touch = this.currentTouches[id];
-        if (touch.pageX > this.offset.x && touch.pageX < this.offset.xMax &&
-            touch.pageY > this.offset.y && touch.pageY < this.offset.yMax) {
+        if (touch.clientX > this.offset.x && touch.clientX < this.offset.xMax &&
+            touch.clientY > this.offset.y && touch.clientY < this.offset.yMax) {
             this.state = 1;
         }
     }
@@ -633,17 +633,17 @@ DPad.prototype.onTouchStart = function(ev) {
 DPad.prototype.onTouchMove = function(ev) {
     this.state = [0, 0, 0, 0]; // up, left, down, right
     Array.from(ev.targetTouches, function(pos) {
-        if (pos.pageX > this.offset.x1 && pos.pageX < this.offset.x2) {
-            if (pos.pageY < this.offset.up_y && pos.pageY > this.offset.y) {
+        if (pos.clientX > this.offset.x1 && pos.clientX < this.offset.x2) {
+            if (pos.clientY < this.offset.up_y && pos.clientY > this.offset.y) {
                 this.state[0] = 1;
-            } else if (pos.pageY > this.offset.down_y && pos.pageY < this.offset.yMax) {
+            } else if (pos.clientY > this.offset.down_y && pos.clientY < this.offset.yMax) {
                 this.state[2] = 1;
             }
         }
-        if (pos.pageY > this.offset.y1 && pos.pageY < this.offset.y2) {
-            if (pos.pageX < this.offset.left_x && pos.pageX > this.offset.x) {
+        if (pos.clientY > this.offset.y1 && pos.clientY < this.offset.y2) {
+            if (pos.clientX < this.offset.left_x && pos.clientX > this.offset.x) {
                 this.state[1] = 1;
-            } else if (pos.pageX > this.offset.right_x && pos.pageX < this.offset.xMax) {
+            } else if (pos.clientX > this.offset.right_x && pos.clientX < this.offset.xMax) {
                 this.state[3] = 1;
             }
         }

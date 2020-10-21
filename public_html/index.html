@@ -7,20 +7,42 @@
     <title>Web4Player</title>
     <style>
     html {
-       touch-action: none;
        user-select: none;
        -webkit-user-select: none;
        height: 100%;
     }
 
     body {
-       touch-action: none;
        margin: 0;
        padding: 0;
        overflow: hidden;
        text-align: center;
        vertical-align: middle;
        height: 100%;
+    }
+
+    div.header {
+      width: 100%;
+      height: 1px;
+      overflow: hidden;
+      display: none;
+    }
+    div.content {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    div.cover {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 100;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      display: none;
     }
 
     #make_url {
@@ -36,7 +58,7 @@
     }
 
     #option {
-        position: relative;
+        position: fixed;
         margin: 6px auto;
 	z-index: 100;
     }
@@ -78,7 +100,7 @@
     }
 
     #video {
-       position: absolute;
+       position: fixed;
        top: 40%;
        left: 50%;
        transform: translate(-50%, -40%);
@@ -95,7 +117,7 @@
     }
 
     #camvideo {
-       position: absolute;
+       position: fixed;
        top: 50%;
        left: 50%;
        transform: translate(-50%, -50%);
@@ -139,17 +161,91 @@
              cancelFullScreen.call(doc);
           }
        }
+       
+       // Not available on iOS
+       if (window.screen.orientation) {
+          window.screen.orientation.addEventListener("change", function () {
+               console.log("orentation:" + screen.orientation.type);
+               if (screen.orientation.type === "landscape-primary") {
+                  console.log("going fullscreen");
+                  toggleFullScreen(true);
+               } else if (screen.orientation.type === "portrait-primary") {
+                  console.log("going windowed");
+                  toggleFullScreen(false);
+               }
+          });
+       }
 
-      window.screen.orientation.addEventListener("change", function () {
-            console.log("orentation:" + screen.orientation.type);
-            if (screen.orientation.type === "landscape-primary") {
-               console.log("going fullscreen");
-               toggleFullScreen(true);
-            } else if (screen.orientation.type === "portrait-primary") {
-               console.log("going windowed");
-               toggleFullScreen(false);
+        var timeout;
+        var offscreen = 0;
+        var isIOS = /iPad|iPhone|iPod/.test(navigator.platform) || 
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+
+        function scrollDetect(event){
+            // wait for the result to settle
+            if( timeout ) clearTimeout(timeout);
+
+            timeout = setTimeout(function() {
+                let header = document.querySelector('div.header');
+                let pad = header.style.height;
+                if (window.scrollY >= 10) { //pad) {
+                    console.log('locking scroll');
+                    // hide the fixed scroll-cover
+                    let cover = document.querySelector('div.cover');
+                    cover.style.display = 'none';
+                    // disables scrolling
+                    document.body.style.overflow = 'hidden';
+                    // turn off scrollDetect
+                    window.removeEventListener('scroll', scrollDetect );                
+                }
+            }, 200);            
+        }
+
+         function configureSwipeUp() {
+            var outerHeight = (window.outerHeight !== 0) ? window.outerHeight :
+               document.body.getBoundingClientRect().height;
+            offscreen = (window.innerHeight < outerHeight);
+            let header = document.querySelector('div.header');
+            let cover = document.querySelector('div.cover');
+            let content = document.querySelector('div.content');
+
+            // Only do fullscreen swipe for landscape mode when content doesn't fill screen
+            if (offscreen && (window.orientation === 90)) {
+               let pad = outerHeight - window.innerHeight;
+               header.style.height = pad;
+               console.log("pad: " + pad);
+               console.log("innerHeight: " + window.innerHeight);
+               console.log("outerHeight: " + outerHeight);
+               console.log("window.outerHeight: " + window.outerHeight);
+               header.style.display = 'block';
+               cover.style.display = 'block';
+               var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+               content.style.height = viewHeight;
+               document.body.style.height = '100% + ' + pad + 'px'; //viewHeight + pad;
+               document.body.style.overflow = 'visible';
+               // listen to scroll to know when in minimal-ui mode.
+               setTimeout(function() {window.addEventListener('scroll', scrollDetect, false );}, 500);
+            } else if (window.orientation === 0) {
+               header.style.display = 'none';
+               cover.style.display = 'none';
+               //var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+               content.style.height = '100%';//viewHeight;
+
+               document.body.style.height = '100%';
             }
-      });
+         }
+
+         window.onload=() => {
+            if (isIOS) setTimeout(function() {configureSwipeUp();}, 500);
+
+         }
+
+         window.addEventListener("orientationchange", function (ev) {
+            if (isIOS) setTimeout(function() {configureSwipeUp();}, 500);
+         });
+
+
    </script>
 
    <script>
@@ -219,6 +315,11 @@
 
    </script>
 
+    <div class="header">
+        <p>header zone</p>
+    </div>
+    <div class="content">
+
 <div id="option">
    <button id="start" onclick="start();">Wanna Play</button>
    <button id="stop" style="display: none" onclick="stop()">Stop</button>
@@ -245,7 +346,13 @@
    makeprojects.com/project/retro-future-remote-play
 </a>
 
-<div id="joypad"/>
+   <div id="joypad"/>
+
+    </div>
+    <div class="cover">
+        <p>Swipe Up to Fullscreen</p>
+    </div>
+
 
 <script src="client.js"></script>
 </body>
