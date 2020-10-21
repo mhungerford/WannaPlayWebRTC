@@ -41,8 +41,9 @@
       height: 100%;
       overflow: hidden;
       background-color: rgba(0, 0, 0, 0.5);
-      color: #fff;
+      color: white;
       display: none;
+      font-weight: bold;
     }
 
     #make_url {
@@ -67,7 +68,7 @@
     }
 
     #readout {
-       display: inline-block;
+       display: none;
        color: white;
        text-align: center;
        font-weight: bolder;
@@ -75,18 +76,20 @@
        text-shadow: -2px 0 black, 0 2px black, 2px 0 black, 0 -2px black;
     }
 
-    #message {
+    div.message {
        display: none;
        position: absolute;
        top: 50%;
        left: 50%;
+       color: white;
+       font-weight: bold;
        transform: translate(-50%, -50%);
-        border-radius: 25px;
-        border: 2px solid #73AD21;
-        background-color: white;
-        padding: 20px;
-        width: 40%;
-        height: 20%;
+       border-radius: 25px;
+       border: 2px solid #73AD21;
+       background-color: rgba(1, 1, 1, 0.5);
+       padding: 20px;
+       width: 50%;
+       height: 30%;
     }
 
     button {
@@ -183,9 +186,23 @@
 
         var timeout;
         var offscreen = 0;
+        // some Android devices navigator.platform shows "Linux armv7l"
+        var isAndroid = /(android)/i.test(navigator.userAgent);
         var isIOS = /iPad|iPhone|iPod/.test(navigator.platform) || 
             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+        var isWebRTC = "RTCPeerConnection" in window;
+
+        var isPhone = isIOS || isAndroid;
+        var isLandscape = false;
+
+        function orientationHandler() {
+            isLandscape = ("orientation" in window) ? (window.orientation == 90) : false;
+            var rotate_msg = document.getElementById('rotate_msg');
+            rotate_msg.style.display = (isLandscape) ? "none" : "block";
+            var start_button = document.getElementById('start');
+            start_button.style.display = (isLandscape && isWebRTC) ? "block" : "none";
+        }
 
         function scrollDetect(event){
             // wait for the result to settle
@@ -243,10 +260,19 @@
 
          window.addEventListener('load', function (event) {
             if (isIOS) setTimeout(function() {configureSwipeUp();}, 500);
+            if (isPhone) orientationHandler();
+
+            if (!isWebRTC) {
+               var start_button = document.getElementById('start');
+               start_button.style.display = "none";
+               var webrtc_msg = document.getElementById('webrtc_msg');
+               webrtc_msg.style.display = "block";
+            }
          });
 
          window.addEventListener("orientationchange", function (ev) {
             if (isIOS) setTimeout(function() {configureSwipeUp();}, 500);
+            if (isPhone) orientationHandler();
          });
 
 
@@ -309,12 +335,18 @@
          function start() {
             document.getElementById('camvideo').pause();
             webrtcStart();
-            //document.getElementById('message').style.display = 'inline-block';
+            document.getElementById('connecting_msg').style.display = 'block';
+         }
+
+         function gameLoaded() {
+            loadPad('dpad.css');
+            document.getElementById('connecting_msg').style.display = 'none';
          }
 
          function stop() {
             webrtcStop();
             document.getElementById('camvideo').play();
+            document.getElementById('connecting_msg').style.display = 'none';
          }
 
    </script>
@@ -323,6 +355,7 @@
     <div class="content">
 
 <div id="option">
+   <p id="webrtc_msg" style='display: none'>WebRTC is not supported by this browser.</p>
    <button id="start" onclick="start();">Wanna Play</button>
    <button id="stop" style="display: none" onclick="stop()">Stop</button>
    <p id="readout">&#8678; Click to Play</p>
@@ -336,12 +369,16 @@
 
 
 <div>
-   <div id="message">
-      <p>Connecting to WannaPlay WebRTC Game server, please wait...</p>
-      <p>Problems?<br>  Private networks block the required UDP ports.</p>
+   <div class="message" id="connecting_msg">
+      <p style='position: absolute; top: 10%; left: 0; right: 0;'>Connecting to WannaPlay WebRTC Game server, please wait...</p>
+      <p style='position: absolute; bottom: 10%; left: 0; right: 0;'>Problems?<br>  Private networks block the required UDP ports.</p>
    </div>
-   <p id="playtimer" style="color:white">30</p>
-   <video id="video" autoplay="false" muted playsinline="true" onplaying="loadPad('dpad.css');" />
+   <div class="message" id="rotate_msg">
+      <span style='font-size:100px; position: absolute; top: 0; left: 0; right: 0; text-align: center;'>&#8634;</span>
+      <p style='position: absolute; top: 100px;'>Please Rotate your Phone to Landscape.</p>
+   </div>
+   <p id="playtimer" style="color:white;">30</p>
+   <video id="video" autoplay="false" muted playsinline="true" onplaying="gameLoaded();" />
 </div>
 
 <a id="make_url" href="https://makeprojects.com/project/retro-future-remote-play">
