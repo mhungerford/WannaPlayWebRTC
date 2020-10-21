@@ -188,8 +188,8 @@
 
             timeout = setTimeout(function() {
                 var header = document.getElementsByClassName('header')[0];
-                var pad = header.style.height;
-                if (window.scrollY >= 10) { //pad) {
+                var pad = parseInt(header.style.height, 10);
+                if (window.scrollY >= pad) {
                     console.log('locking scroll');
                     // hide the fixed scroll-cover
                     var cover = document.getElementsByClassName('cover')[0];
@@ -222,7 +222,7 @@
                cover.style.display = 'block';
                var viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
                content.style.height = viewHeight;
-               document.body.style.height = '100% + ' + pad + 'px'; //viewHeight + pad;
+               document.body.style.height = '100% + ' + pad + 'px';
                document.body.style.overflow = 'visible';
                // listen to scroll to know when in minimal-ui mode.
                setTimeout(function() {window.addEventListener('scroll', scrollDetect, false );}, 500);
