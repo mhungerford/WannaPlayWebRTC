@@ -55,7 +55,7 @@ function negotiate() {
     });
 }
 
-function addVideo() {
+function webrtcAddVideo() {
    if (vc == null) {
      vc = pc.addTransceiver('video', {direction: 'recvonly'});
      negotiate(true);
@@ -93,7 +93,8 @@ function webrtcStart() {
       if (evt.data.substring(0, 4) === 'pong') {
       }
       if (evt.data.substring(0, 5) === 'start') {
-         addVideo();
+         webrtcAddVideo();
+         document.getElementById('readout').innerHTML = evt.data.substring(7);
       }
    };
 
@@ -115,16 +116,9 @@ function webrtcStart() {
 
 
     negotiate();
-
-    document.getElementById('start').style.display = 'none';
-    document.getElementById('stop').style.display = 'inline-block';
 }
 
 function webrtcStop() {
-    document.getElementById('stop').style.display = 'none';
-    document.getElementById('video').style.display = 'none';
-    document.getElementById('joypad').style.display = 'none';
-
     // close data channel
     if (dc) {
         dc.close();
@@ -148,9 +142,4 @@ function webrtcStop() {
         // Force the whole page to reload
         //window.location.reload();
     }, 500);
-
-    // Wait a bit to show the request button again
-    setTimeout(function() {
-      document.getElementById('start').style.display = 'inline-block';
-    }, 5 * 1000);
 }

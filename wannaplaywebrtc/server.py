@@ -239,7 +239,7 @@ async def offer(request):
                       print("Assigning joystick:{}".format(jsdev.idx))
                       jslist[jslist.index(jsdev)] = jsdev._replace(locked = True)
                       #trigger to start a direct webrtc video feed (low latency)
-                      channel.send("start")
+                      channel.send("start: Player {}".format(jsdev.idx))
                 except ConnectionError:
                   pass
             

@@ -68,7 +68,9 @@
     }
 
     #readout {
-       display: none;
+       display: absolute;
+       top: 0;
+       right: 40%;
        color: white;
        text-align: center;
        font-weight: bolder;
@@ -105,6 +107,10 @@
        text-shadow: -2px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
     }
 
+    #start {
+       display: none;
+    }
+
     #video {
        position: fixed;
        top: 40%;
@@ -127,10 +133,10 @@
        top: 50%;
        left: 50%;
        transform: translate(-50%, -50%);
-       width: 85%;
-       height: 85%;
+       width: 100%;
+       height: 100%;
        opacity: 1;
-       object-fit: contain;
+       object-fit: cover;
     }
 
     #media {
@@ -200,8 +206,7 @@
             isLandscape = ("orientation" in window) ? (window.orientation == 90) : false;
             var rotate_msg = document.getElementById('rotate_msg');
             rotate_msg.style.display = (isLandscape) ? "none" : "block";
-            var start_button = document.getElementById('start');
-            start_button.style.display = (isLandscape && isWebRTC) ? "block" : "none";
+            displayStartButton(isLandscape && isWebRTC);
         }
 
         function scrollDetect(event){
@@ -259,83 +264,59 @@
          }
 
          window.addEventListener('load', function (event) {
-            if (isIOS) setTimeout(function() {configureSwipeUp();}, 500);
-            if (isPhone) orientationHandler();
+            if (isIOS && isWebRTC) setTimeout(function() {configureSwipeUp();}, 500);
+            if (isPhone && isWebRTC) orientationHandler();
 
             if (!isWebRTC) {
-               var start_button = document.getElementById('start');
-               start_button.style.display = "none";
+               displayStartButton(false);
                var webrtc_msg = document.getElementById('webrtc_msg');
                webrtc_msg.style.display = "block";
+            } else if (!isPhone) {
+               displayStartButton(true);
             }
          });
 
          window.addEventListener("orientationchange", function (ev) {
-            if (isIOS) setTimeout(function() {configureSwipeUp();}, 500);
-            if (isPhone) orientationHandler();
+            if (isIOS && isWebRTC) setTimeout(function() {configureSwipeUp();}, 500);
+            if (isPhone && isWebRTC) orientationHandler();
          });
 
+         var kbdkeys = {
+            'KeyZ': 'z',
+            'KeyX': 'x',
+            'ArrowLeft': 'l',
+            'ArrowRight': 'r',
+            'ArrowUp': 'u',
+            'ArrowDown': 'd'
+         };
 
-   </script>
-
-   <script>
-         var document = window.document;
          document.addEventListener('keydown', function(event) {
             // Notice: event.repeat broken on Firefox-X11 (causes more events)
             if (event.repeat || dc == null) { return; }
-            switch(event.code) {
-               case 'KeyZ':
-                  dc.send("keydn: " + 'z');
-                  break;
-               case 'KeyX':
-                  dc.send("keydn: " + 'x');
-                  break;
-               case 'ArrowLeft':
-                  dc.send("keydn: " + 'l');
-                  break;
-               case 'ArrowRight':
-                  dc.send("keydn: " + 'r');
-                  break;
-               case 'ArrowUp':
-                  dc.send("keydn: " + 'u');
-                  break;
-               case 'ArrowDown':
-                  dc.send("keydn: " + 'd');
-                  break;
+            if (event.code in kbdkeys) {
+               dc.send("keydn: " + kbdkeys[event.code]);
             }
          });
          document.addEventListener('keyup', function(event) {
             if (dc == null) { return; }
-            switch(event.code) {
-               case 'KeyZ':
-                  dc.send("keyup: " + 'z');
-                  break;
-               case 'KeyX':
-                  dc.send("keyup: " + 'x');
-                  break;
-               case 'ArrowLeft':
-                  dc.send("keyup: " + 'l');
-                  break;
-               case 'ArrowRight':
-                  dc.send("keyup: " + 'r');
-                  break;
-               case 'ArrowUp':
-                  dc.send("keyup: " + 'u');
-                  break;
-               case 'ArrowDown':
-                  dc.send("keyup: " + 'd');
-                  break;
-               case 'Backslash':
-                  dc.send("gamectl: " + 'switch');
-                  break;
+            if (event.code in kbdkeys) {
+               dc.send("keyup: " + kbdkeys[event.code]);
             }
+            // Special control character
+            if (event.code === 'Backslash') dc.send("gamectl: " + 'switch');
          });
 
+         function displayStartButton(enable) {
+            document.getElementById('start').style.display = (enable) ? 'inline-block' : 'none';
+         }
 
          function start() {
             document.getElementById('camvideo').pause();
-            webrtcStart();
             document.getElementById('connecting_msg').style.display = 'block';
+            displayStartButton(false);
+            document.getElementById('stop').style.display = 'inline-block';
+
+            webrtcStart();
          }
 
          function gameLoaded() {
@@ -345,8 +326,18 @@
 
          function stop() {
             webrtcStop();
-            document.getElementById('camvideo').play();
+
+            document.getElementById('stop').style.display = 'none';
+            document.getElementById('video').style.display = 'none';
+            document.getElementById('joypad').style.display = 'none';
             document.getElementById('connecting_msg').style.display = 'none';
+            document.getElementById('camvideo').play();
+            // Wait a bit to show the request button again
+            setTimeout(function() {
+               if ((isPhone && isLandscape) || (!isPhone)) {
+                  displayStartButton(true);
+               }
+            }, 5 * 1000);
          }
 
    </script>
@@ -355,14 +346,14 @@
     <div class="content">
 
 <div id="option">
-   <p id="webrtc_msg" style='display: none'>WebRTC is not supported by this browser.</p>
+   <p id="webrtc_msg" style='display: none; color: yellow;'>WebRTC is not supported by this browser.</p>
    <button id="start" onclick="start();">Wanna Play</button>
    <button id="stop" style="display: none" onclick="stop()">Stop</button>
    <p id="readout">&#8678; Click to Play</p>
 </div>
 
 <div>
-   <video id="camvideo" autoplay="true" loop muted playsinline="true">
+   <video id="camvideo" autoplay="true" loop muted playsinline="true" disableRemotePlayback>
       <source src="prerecorded.mp4"/>
    </video>
 </div>
@@ -371,14 +362,14 @@
 <div>
    <div class="message" id="connecting_msg">
       <p style='position: absolute; top: 10%; left: 0; right: 0;'>Connecting to WannaPlay WebRTC Game server, please wait...</p>
-      <p style='position: absolute; bottom: 10%; left: 0; right: 0;'>Problems?<br>  Private networks block the required UDP ports.</p>
+      <p style='position: absolute; bottom: 10%; left: 0; right: 0;font-size: small;'>Problems? Private networks may block UDP.</p>
    </div>
    <div class="message" id="rotate_msg">
       <span style='font-size:100px; position: absolute; top: 0; left: 0; right: 0; text-align: center;'>&#8634;</span>
       <p style='position: absolute; top: 100px;'>Please Rotate your Phone to Landscape.</p>
    </div>
    <p id="playtimer" style="color:white;">30</p>
-   <video id="video" autoplay="false" muted playsinline="true" onplaying="gameLoaded();" />
+   <video id="video" autoplay="false" muted playsinline="true" disableRemotePlayback onplaying="gameLoaded();" />
 </div>
 
 <a id="make_url" href="https://makeprojects.com/project/retro-future-remote-play">
