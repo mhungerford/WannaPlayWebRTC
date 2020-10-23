@@ -94,7 +94,11 @@ function webrtcStart() {
       }
       if (evt.data.substring(0, 5) === 'start') {
          webrtcAddVideo();
-         document.getElementById('readout').innerHTML = evt.data.substring(7);
+         document.getElementById('player').innerHTML = evt.data.substring(7);
+         document.getElementById('player').style.display = "inline-block";
+
+         document.getElementById('countdown').innerHTML = "Time: 30";
+         document.getElementById('countdown').style.display = "inline-block";
       }
    };
 

@@ -59,20 +59,74 @@
     }
 
     #option {
-        position: fixed;
-        margin-top: 6px;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-	z-index: 100;
+       position: fixed;
+       top: 6px;
+       left: 0;
+       right: 0;
+       z-index: 100;
     }
 
-    #readout {
-       display: absolute;
-       top: 0;
-       right: 40%;
+    #clickhere_left {
+       display: none;
+       position: absolute;
+       transform: translateY(-20%);
+       width: calc(50% - 80px);
+       text-align: right;
+       left: 0;
        color: white;
-       text-align: center;
+       font-weight: bolder;
+       font-size: large;
+       text-shadow: -2px 0 black, 0 2px black, 2px 0 black, 0 -2px black;
+    }
+
+    #countdown {
+       display: none;
+       position: absolute;
+       transform: translateY(-20%);
+       width: calc(50% - 80px);
+       text-align: right;
+       left: 0;
+       color: white;
+       font-weight: bolder;
+       font-size: large;
+       text-shadow: -2px 0 black, 0 2px black, 2px 0 black, 0 -2px black;
+    }
+
+    #start {
+       display: none;
+       position: absolute;
+       left: 50%;
+       transform: translateX(-50%);
+    }
+
+    #stop {
+       display: none;
+       position: absolute;
+       left: 50%;
+       transform: translateX(-50%);
+    }
+
+    #clickhere_right {
+       display: none;
+       position: absolute;
+       transform: translateY(-20%);
+       width: calc(50% - 80px);
+       text-align: left;
+       right: 0;
+       color: white;
+       font-weight: bolder;
+       font-size: large;
+       text-shadow: -2px 0 black, 0 2px black, 2px 0 black, 0 -2px black;
+    }
+
+    #player {
+       display: none;
+       position: absolute;
+       transform: translateY(-20%);
+       width: calc(50% - 80px);
+       text-align: left;
+       right: 0;
+       color: white;
        font-weight: bolder;
        font-size: large;
        text-shadow: -2px 0 black, 0 2px black, 2px 0 black, 0 -2px black;
@@ -95,20 +149,15 @@
     }
 
     button {
-        padding: 6px 16px;
-        margin: 0 8px;
-        color: white;
-        border: 4px solid #0099cc;
-        background-color: #FF007C;
-        border-radius: 25px;
+       padding: 6px 16px;
+       color: white;
+       border: 4px solid #0099cc;
+       background-color: #FF007C;
+       border-radius: 25px;
        text-align: center;
        font-weight: bolder;
        font-size: large;
        text-shadow: -2px 0 black, 0 2px black, 1px 0 black, 0 -1px black;
-    }
-
-    #start {
-       display: none;
     }
 
     #video {
@@ -308,6 +357,8 @@
 
          function displayStartButton(enable) {
             document.getElementById('start').style.display = (enable) ? 'inline-block' : 'none';
+            document.getElementById('clickhere_left').style.display = (enable) ? 'inline-block' : 'none';
+            document.getElementById('clickhere_right').style.display = (enable) ? 'inline-block' : 'none';
          }
 
          function start() {
@@ -347,9 +398,12 @@
 
 <div id="option">
    <p id="webrtc_msg" style='display: none; color: yellow;'>WebRTC is not supported by this browser.</p>
+   <p id="countdown">Time: 60</p>
+   <p id="clickhere_left">Click to Play ==&gt;</p>
    <button id="start" onclick="start();">Wanna Play</button>
    <button id="stop" style="display: none" onclick="stop()">Stop</button>
-   <p id="readout">&#8678; Click to Play</p>
+   <p id="clickhere_right">&lt;== Click to Play</p>
+   <p id="player">Player1</p>
 </div>
 
 <div>
