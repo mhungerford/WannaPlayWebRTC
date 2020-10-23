@@ -226,20 +226,59 @@ async def offer(request):
               setattr(pc, 'js', None)
 
           @channel.on("message")
-          def on_message(message):
+          async def on_message(message):
+              #we use the 1 a second ping as heartbeat (and query)
               if isinstance(message, str) and message.startswith("ping"):
                 try:
-                  #we use the 1 a second ping as heartbeat (and query)
-                  channel.send("pong" + message[4:])
-                  # if they don't have a js, and one is available
-                  if getattr(pc, 'js', None) is None:
-                    jsdev = next((x for x in jslist if x.locked == False), None)
-                    if jsdev is not None:
-                      setattr(pc, 'js', jsdev.dev)
-                      print("Assigning joystick:{}".format(jsdev.idx))
-                      jslist[jslist.index(jsdev)] = jsdev._replace(locked = True)
-                      #trigger to start a direct webrtc video feed (low latency)
-                      channel.send("start: Player{}".format(jsdev.idx))
+                  #if at the top of the queue and not assigned
+                  if pcs.index(pc) < len(jslist):
+                    if not hasattr(pc, 'js'):
+                      # if they don't have a js, and one is available
+                      jsdev = next((x for x in jslist if x.locked == False), None)
+                      if jsdev is not None:
+                        setattr(pc, 'js', jsdev.dev)
+                        print("Assigning joystick:{}".format(jsdev.idx))
+                        jslist[jslist.index(jsdev)] = jsdev._replace(locked = True)
+                        #trigger to start a direct webrtc video feed (low latency)
+                        if jsdev.idx == 1:
+                          channel.send("start: Player{} (Green)".format(jsdev.idx))
+                        elif jsdev.idx == 2:
+                          channel.send("start: Player{} (Red)".format(jsdev.idx))
+                        else:
+                          channel.send("start: Player{}".format(jsdev.idx))
+                    else:
+                      # if they do have a joystick, and people are waiting
+                      if (len(pcs) > len(jslist)):
+                        #set future timestamp if not set
+                        if not hasattr(pc, 'ts'):
+                          setattr(pc, 'ts', int(time()) + 10)
+                        remaining_time = pc.ts - int(time())
+                        if remaining_time < 0:
+                          channel.send("stop")
+                          await asyncio.sleep(0.1)
+                          channel.close()
+                          for t in pc.getTransceivers():
+                            await t.stop()
+                          await pc.close()
+                          js = getattr(pc, 'js', None)
+                          if js is not None:
+                            jsdev = next((x for x in jslist if x.dev == js), None)
+                            if jsdev is not None:
+                              print("Freeing joystick:{}".format(jsdev.idx))
+                              jslist[jslist.index(jsdev)] = jsdev._replace(locked =  False)
+                          try:
+                            pcs.remove(pc)
+                          except ValueError:
+                            pass
+                        else:
+                          channel.send("Time: {}".format(remaining_time))
+                      else:
+                        channel.send("Time: --")
+                  else:
+                    #send their position in the waitlist
+                    channel.send("Waitlist: {} of {}".format(
+                      pcs.index(pc) + 1 - len(jslist), len(pcs) - len(jslist)))
+
                 except ConnectionError:
                   pass
             

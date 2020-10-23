@@ -85,20 +85,26 @@ function webrtcStart() {
       dcInterval = setInterval(function() {
          var message = 'ping hello there';
          dc.send(message);
-      }, 1000);
+      }, 1 * 1000);
    };
    dc.onmessage = function(evt) {
       console.log("Data channel reply: " + evt.data)
 
-      if (evt.data.substring(0, 4) === 'pong') {
+      if (evt.data.substring(0, 4) === 'Time') {
+         document.getElementById('countdown').innerHTML = evt.data;
+         document.getElementById('countdown').style.display = "inline-block";
+      }
+      if (evt.data.substring(0, 8) === 'Waitlist') {
+         document.getElementById('countdown').innerHTML = evt.data;
+         document.getElementById('countdown').style.display = "inline-block";
       }
       if (evt.data.substring(0, 5) === 'start') {
          webrtcAddVideo();
          document.getElementById('player').innerHTML = evt.data.substring(7);
          document.getElementById('player').style.display = "inline-block";
-
-         document.getElementById('countdown').innerHTML = "Time: 30";
-         document.getElementById('countdown').style.display = "inline-block";
+      }
+      if (evt.data.substring(0, 4) === 'stop') {
+         stop();
       }
    };
 
