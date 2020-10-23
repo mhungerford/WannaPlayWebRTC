@@ -362,7 +362,6 @@
          }
 
          function start() {
-            document.getElementById('camvideo').pause();
             document.getElementById('connecting_msg').style.display = 'block';
             displayStartButton(false);
             document.getElementById('stop').style.display = 'inline-block';
@@ -371,6 +370,7 @@
          }
 
          function gameLoaded() {
+            document.getElementById('camvideo').pause();
             loadPad('dpad.css');
             document.getElementById('connecting_msg').style.display = 'none';
          }
@@ -383,6 +383,8 @@
             document.getElementById('joypad').style.display = 'none';
             document.getElementById('connecting_msg').style.display = 'none';
             document.getElementById('camvideo').play();
+            document.getElementById('countdown').style.display = "none";
+            document.getElementById('player').style.display = "none";
             // Wait a bit to show the request button again
             setTimeout(function() {
                if ((isPhone && isLandscape) || (!isPhone)) {
@@ -398,12 +400,12 @@
 
 <div id="option">
    <p id="webrtc_msg" style='display: none; color: yellow;'>WebRTC is not supported by this browser.</p>
-   <p id="countdown">Time: 60</p>
+   <p id="countdown"></p>
    <p id="clickhere_left">Click to Play ==&gt;</p>
    <button id="start" onclick="start();">Wanna Play</button>
    <button id="stop" style="display: none" onclick="stop()">Stop</button>
    <p id="clickhere_right">&lt;== Click to Play</p>
-   <p id="player">Player1</p>
+   <p id="player"></p>
 </div>
 
 <div>

@@ -251,7 +251,8 @@ async def offer(request):
                       if (len(pcs) > len(jslist)):
                         #set future timestamp if not set
                         if not hasattr(pc, 'ts'):
-                          setattr(pc, 'ts', int(time()) + 10)
+                          #lets do 60 seconds plus a bit of hidden stopped time
+                          setattr(pc, 'ts', int(time()) + 60 + 5)
                         remaining_time = pc.ts - int(time())
                         if remaining_time < 0:
                           channel.send("stop")
@@ -271,7 +272,8 @@ async def offer(request):
                           except ValueError:
                             pass
                         else:
-                          channel.send("Time: {}".format(remaining_time))
+                          # 5 second hidden game over time
+                          channel.send("Time: {}".format(max(0, remaining_time - 5)))
                       else:
                         channel.send("Time: --")
                   else:
@@ -283,11 +285,17 @@ async def offer(request):
                   pass
             
               elif isinstance(message, str) and message.startswith("controller: "):
+                  #if in the last "hidden" 5 seconds of a turn, ignore buttons
+                  if hasattr(pc, 'ts') and (pc.ts - int(time()) < 5):
+                    return
                   vals = message[12:].split(',')
                   if getattr(pc, 'js', None) is not None:
                     jsupdate_vals(pc.js, vals)
 
               elif isinstance(message, str) and message.startswith("key"):
+                  #if in the last "hidden" 5 seconds of a turn, ignore buttons
+                  if hasattr(pc, 'ts') and (pc.ts - int(time()) < 5):
+                    return
                   direction = message[3]
                   key = message[7]
                   dval = 1 if direction == "d" else 0
