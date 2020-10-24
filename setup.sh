@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #enable uinput based virtual joysticks
-./src/yoke/yoke-enable-uinput.sh
+./wannaplaywebrtc/yoke/yoke-enable-uinput.sh
 
 #install all ubuntu apt packages
 sed 's/#.*//' apt-packages.txt | xargs sudo apt-get install

@@ -103,7 +103,8 @@ def process_dumped_images(shared_image_array,
         except PIL.UnidentifiedImageError:
           pass
     curr_time = time()
-    sleep(max(0, 0.033 - (curr_time - last_time))) # ~30 FPS image retrieval
+    #sleep(max(0, 0.033 - (curr_time - last_time))) # ~30 FPS image retrieval
+    sleep(max(0, 0.050 - (curr_time - last_time))) # ~30 FPS image retrieval
     last_time = curr_time
 
 

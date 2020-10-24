@@ -1,6 +1,6 @@
 wheel
 aiortc
-aiohttp
+aiohttp==3.6.3
 av
 numpy
 uvloop
