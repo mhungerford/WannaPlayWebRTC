@@ -87,13 +87,15 @@ def process_dumped_images(shared_image_array,
   while True:
     pics = list(Path(image_path).glob(image_prefix + '*.' + image_format))
     if len(pics) > 0:
-      lastpic = pics[-1]
+      lastpic = pics.pop()
       filesize = lastpic.stat().st_size
       if filesize >= 49206:
         try:
           with Image.open(lastpic) as img:
             imb = img.tobytes()
             shared_image_array[:] = imb
+          #move the lastpic over for rgbmatrix bmp viewer
+          os.replace(lastpic, '/tmp/image.bmp')
           for pic in pics:
             pic.unlink()
         except OSError:
