@@ -203,6 +203,7 @@
 </head>
 
 <body>
+    <script type="text/javascript" src="https://v.angelcam.com/js_sdk"></script>
     <script src="touch-emulator.js"></script>
     <script> TouchEmulator(); </script>
     <!-- For iOS 11 for missing flatMap -->
@@ -370,7 +371,7 @@
          }
 
          function gameLoaded() {
-            document.getElementById('camvideo').pause();
+            //document.getElementById('camvideo').pause();
             loadPad('dpad.css');
             document.getElementById('connecting_msg').style.display = 'none';
          }
@@ -382,7 +383,7 @@
             document.getElementById('video').style.display = 'none';
             document.getElementById('joypad').style.display = 'none';
             document.getElementById('connecting_msg').style.display = 'none';
-            document.getElementById('camvideo').play();
+            //document.getElementById('camvideo').play();
             document.getElementById('countdown').style.display = "none";
             document.getElementById('player').style.display = "none";
             // Wait a bit to show the request button again
@@ -408,11 +409,17 @@
    <p id="player"></p>
 </div>
 
+
+<!--
 <div>
    <video id="camvideo" autoplay="true" loop muted playsinline="true" disableRemotePlayback>
       <source src="prerecorded.mp4"/>
    </video>
 </div>
+-->
+
+<div id='camvideo'></div>
+<script>new Angelcam.player('camvideo', {id: '49lj94x7y2',fullscreen:false});</script>
 
 
 <div>
