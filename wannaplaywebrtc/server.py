@@ -30,6 +30,19 @@ from grabwindow import GrabWindow
 from yoke import yoke # requires uinput and udev.rules (ie. root) (supports 4 controllers)
 from sdlkbdsim import SdlKbdSim # requires sdlwrap binary use (supports keyboard)
 
+# optional gpio controller
+p1gpios = [23,24,25]
+p2gpios = [17,22,27]
+try:
+    import RPi.GPIO as GPIO
+    GPIO.setmode(GPIO.BCM) #use gpio numbers
+    GPIO.setup(p1gpios, GPIO.OUT)
+    GPIO.setup(p2gpios, GPIO.OUT)
+except RuntimeError:
+    print("Error importing RPi.GPIO!  Check permissions, usergroup gpio.")
+except ImportError:
+    pass
+
 # optional, for better performance than asyncio default loop
 try:
     import uvloop
@@ -73,6 +86,15 @@ def jsupdate_vals(js, vals):
     for idx, state in enumerate(vals):
       js.emit(events[idx], int(state))
     js.flush()
+  elif isinstance(js, str):
+    for idx, state in enumerate(vals):
+      gpiojs = p1gpios if (js == "gpio_js1") else p2gpios
+      if (idx == 0):
+        GPIO.output(gpiojs[0], int(state))
+      elif (idx == 3):
+        GPIO.output(gpiojs[1], int(state))
+      elif (idx == 5):
+        GPIO.output(gpiojs[2], int(state))
   else:
     for idx, state in enumerate(vals):
       sdlkbdsim.setkey(idx, int(state))
@@ -383,6 +405,8 @@ if __name__ == "__main__":
         help="Launch the application command (opposite to --grab-window).")
     parser.add_argument("--window_size", type=str, default="128 128",
         help="Set sdl window size (w h) for launch-sdl-app.")
+    parser.add_argument("--enable-gpio-buttons", action="store_true", 
+        help="Use gpio pins for keys.")
     parser.add_argument("--enable-virtual-keyboard", action="store_true", 
         help="Use sdl event injector for virtual keys. (requires --launch-sdl-app)")
     parser.add_argument("--enable-waitlist", type=int, default=4,
@@ -410,6 +434,9 @@ if __name__ == "__main__":
     #some games prefer joysticks setup before launching
     if args.enable_virtual_keyboard:
       jslist.append(JSDev(1, False, 1))
+    elif args.enable_gpio_buttons:
+      jslist.append(JSDev("gpio_js1", False, 1))
+      jslist.append(JSDev("gpio_js2", False, 2))
     else:
       #using yoke uinput based virtual joysticks
       #don't use numbers in Yoke name
