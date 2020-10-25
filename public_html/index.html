@@ -203,7 +203,7 @@
 </head>
 
 <body>
-    <script type="text/javascript" src="https://v.angelcam.com/js_sdk"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="touch-emulator.js"></script>
     <script> TouchEmulator(); </script>
     <!-- For iOS 11 for missing flatMap -->
@@ -410,16 +410,40 @@
 </div>
 
 
-<!--
 <div>
    <video id="camvideo" autoplay="true" loop muted playsinline="true" disableRemotePlayback>
-      <source src="prerecorded.mp4"/>
+      <!--source src="https://e1-na3.angelcam.com/cameras/99158/streams/hls/playlist.m3u8?token=eyJjYW1lcmFfaWQiOiI5OTE1OCIsInRpbWUiOjE2MDM1ODcxMjAxMjc3NzMsInRpbWVvdXQiOjM2MDB9.a64a9a786543b78ca2e04c8e864e3872fadc8374fef2556bcae495c77a11ef3e"/-->
    </video>
 </div>
--->
 
-<div id='camvideo'></div>
-<script>new Angelcam.player('camvideo', {id: '49lj94x7y2',fullscreen:false});</script>
+<script>
+  var video = document.getElementById('camvideo');
+  var videoSrc = 'https://e1-na3.angelcam.com/cameras/99158/streams/hls/playlist.m3u8?token=eyJjYW1lcmFfaWQiOiI5OTE1OCIsInRpbWUiOjE2MDM1ODcxMjAxMjc3NzMsInRpbWVvdXQiOjM2MDB9.a64a9a786543b78ca2e04c8e864e3872fadc8374fef2556bcae495c77a11ef3e';
+  //
+  // First check for native browser HLS support
+  //
+  if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = videoSrc;
+    video.addEventListener('loadedmetadata', function() {
+      video.play();
+    });
+  //
+  // If no native HLS support, check if hls.js is supported
+  //
+  } else if (Hls.isSupported()) {
+    var hls = new Hls();
+    hls.loadSource(videoSrc);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+      video.play();
+    });
+  }
+</script>
+
+<!--div>
+   <iframe id="camvideo" src="https://v.angelcam.com/iframe?v=49lj94x7y2&autoplay=1&mute=1&fullscreen=0"></iframe>
+</div-->
+
 
 
 <div>
