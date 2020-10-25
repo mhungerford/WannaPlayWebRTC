@@ -10,3 +10,5 @@ mss
 python-uinput
 python-xlib
 uvloop
+pycurl
+opencv-python

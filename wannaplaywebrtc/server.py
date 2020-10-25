@@ -28,6 +28,15 @@ import pycurl
 import re
 import io
 
+#webcam support for kartrace
+import cv2
+webcam = cv2.VideoCapture(0, cv2.CAP_V4L2)
+webcam.set(cv2.CAP_PROP_FPS, 24)
+webcam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+webcam.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
+#ret, frame = webcam.read()
+#cv2.imwrite("outputImage.jpg", frame)
+
 #grab window support (for apps launched prior to this server)
 from grabwindow import GrabWindow
 
@@ -135,6 +144,21 @@ def process_dumped_images(shared_image_array,
     last_time = curr_time
 
 
+def process_capture_webcam(shared_image_array):
+  last_time = time()
+
+  while True:
+    # Grab the data
+    ret, frame = webcam.read()
+    if ret:
+      # "interpret" buffer as numpy array
+      img_wrap = np.frombuffer(shared_image_array, frame.dtype).reshape(frame.shape)
+      np.copyto(img_wrap, frame)
+
+    curr_time = time()
+    sleep(max(0, 0.042 - (curr_time - last_time))) # ~24 FPS image retrieval
+    last_time = curr_time
+
 #capture images in a background process and store to shared mp array
 def process_capture_images(shared_image_array,
     window_position=(0, 0), window_size=(128, 128)):
@@ -178,12 +202,12 @@ class VideoImageTrack(VideoStreamTrack):
 
         # "interpret" Shared Buffer Image as numpy array
         #raw_image = np.frombuffer(shared_image_array, np.uint8).reshape(win_w, win_h, 4)
-        raw_image = np.frombuffer(shared_image_array, np.uint8).reshape(win_w, win_h, 3)
+        raw_image = np.frombuffer(shared_image_array, np.uint8).reshape(360, 640, 3)
         #img = cv2.imread("/tmp/screenshot.png", cv2.IMREAD_COLOR)
 
         # create video frame
-        #frame = av.VideoFrame.from_ndarray(raw_image, format="bgra")
-        frame = av.VideoFrame.from_ndarray(raw_image, format="rgb24")
+        frame = av.VideoFrame.from_ndarray(raw_image, format="bgr24") #bgr24?
+        #frame = av.VideoFrame.from_ndarray(raw_image, format="rgb24")
         frame.pts = pts
         frame.time_base = time_base
         
@@ -470,6 +494,11 @@ if __name__ == "__main__":
       shared_image_array = RawArray('B', win_w * win_h * 4)
       process = Process(target=process_captured_images, 
           args=(shared_image_array, (win_x, win_y), (win_w, win_h)))
+      process.start()
+    elif True:
+      shared_image_array = RawArray('B', 640 * 360 * 3)
+      process = Process(target=process_capture_webcam, 
+          args=(shared_image_array,))
       process.start()
     else:
       win_x, win_y, win_w, win_h = (0, 0, 
