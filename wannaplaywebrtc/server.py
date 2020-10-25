@@ -306,9 +306,9 @@ async def offer(request):
                         jslist[jslist.index(jsdev)] = jsdev._replace(locked = True)
                         #trigger to start a direct webrtc video feed (low latency)
                         if jsdev.idx == 1:
-                          channel.send("start: Player{} (Green)".format(jsdev.idx))
+                          channel.send("start: Player{} (Batman)".format(jsdev.idx))
                         elif jsdev.idx == 2:
-                          channel.send("start: Player{} (Red)".format(jsdev.idx))
+                          channel.send("start: Player{} (Mario)".format(jsdev.idx))
                         else:
                           channel.send("start: Player{}".format(jsdev.idx))
                     else:
