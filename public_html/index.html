@@ -203,7 +203,6 @@
 </head>
 
 <body>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="touch-emulator.js"></script>
     <script> TouchEmulator(); </script>
     <!-- For iOS 11 for missing flatMap -->
@@ -415,35 +414,6 @@
       <source src="prerecorded.mp4"/>
    </video>
 </div>
-
-<!--script>
-  var video = document.getElementById('camvideo');
-  var videoSrc = 'ANGELCAM_HLSURL';
-  //
-  // First check for native browser HLS support
-  //
-  if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    video.src = videoSrc;
-    video.addEventListener('loadedmetadata', function() {
-      video.play();
-    });
-  //
-  // If no native HLS support, check if hls.js is supported
-  //
-  } else if (Hls.isSupported()) {
-    var hls = new Hls();
-    hls.loadSource(videoSrc);
-    hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, function() {
-      video.play();
-    });
-  }
-</script-->
-
-<!--div>
-   <iframe id="camvideo" src="https://v.angelcam.com/iframe?v=49lj94x7y2&autoplay=1&mute=1&fullscreen=0"></iframe>
-</div-->
-
 
 
 <div>
