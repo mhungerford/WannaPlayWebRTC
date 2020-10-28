@@ -195,14 +195,14 @@ async def index(request):
     content = open(Path(PROJECT_ROOT, "public_html/index.html"), "r").read()
 
     # Super hacky get angelcam HSF from iframe for index.html
-    storage = io.BytesIO()
-    curl = pycurl.Curl()
-    curl.setopt(curl.URL, "https://v.angelcam.com/iframe?v=49lj94x7y2")
-    curl.setopt(curl.WRITEFUNCTION, storage.write)
-    curl.perform()
-    text = str(storage.getvalue(), 'utf-8')
-    source = re.findall(r".*source: '(.*)',$", text, re.MULTILINE)[0]
-    content = content.replace('ANGELCAM_HLSURL', source)
+    #storage = io.BytesIO()
+    #curl = pycurl.Curl()
+    #curl.setopt(curl.URL, "https://v.angelcam.com/iframe?v=49lj94x7y2")
+    #curl.setopt(curl.WRITEFUNCTION, storage.write)
+    #curl.perform()
+    #text = str(storage.getvalue(), 'utf-8')
+    #source = re.findall(r".*source: '(.*)',$", text, re.MULTILINE)[0]
+    #content = content.replace('ANGELCAM_HLSURL', source)
 
     return web.Response(content_type="text/html", text=content)
 
