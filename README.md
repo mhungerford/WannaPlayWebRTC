@@ -9,12 +9,16 @@ Provides an HTML interface with touchscreen gamepad, keyboard support, and low-l
 - Yoke python library provides virtual joysticks (uinput based on Linux, vJoy based on Windows).
 - MSS python library utilized for fast screenshot grabbing.
 - PyAV library enables low-latency H.264 video encoding of video game screen.
+- UPnPy provides UPnP based port-forwarding to allow remote users access to game server.
 
-## Desktop game support
-Select game by it's "Window Name", places window in focus and retrieves window information necessary for screen-grabbing game images.  Full-screen games not recommended due to high-resolution causing 
+## Desktop Game support
+Select game by it's "Window Name", places window in focus and retrieves window information necessary for screen-grabbing game images.  Full-screen games not recommended due to high-resolution causing h.264 encoding and transmission lag.
 
 ## Optimized for libSDL based games
 SDL provides a render-to-image backend that avoids rendering to graphics then using a screen-grabbing library to retrieve those images.  Avoids issues of window detection, rendering latency, and window focus (joystick focus is forced).
+
+SDL based games on Linux require the Yoke controller layout below (add to ~.bashrc, or export directly before launching that game from command line)
+```export SDL_GAMECONTROLLERCONFIG='06000000596f6b650000000000000000,Yoke,platform:Linux,a:b0,b:b1,dpup:b2,dpdown:b3,dpleft:b4,dpright:b5,'"```
 
 ## Pico-8 special support
 Pico-8 is a great fantasy console platform with thousands of free retro style games, with up to 4 player joystick support.  Thanks to its 128x128 resolution, it can be encoded in software on a Raspberry Pi without issue and requires little bandwidth.

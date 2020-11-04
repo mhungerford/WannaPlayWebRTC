@@ -100,7 +100,7 @@
 
 /* Buttons */
 .analogbutton { background-color: #ccc; z-index: 1; }
-.button { background-color: #bbb; z-index: 1; }
+.button { background-color: rgba(0,0,0, 0.0); z-index: 1; }
 .pressed { filter: brightness(70%); }
 .buttonhitbox {
     position: absolute;
@@ -113,8 +113,8 @@
 }
 /* seq 1 16 | xargs -I xx echo "#bxx { background-image: url('img/bxx.svg'); }" */
 /* Some edits done by hand */
-#b1 { background-image: url('img/bz.svg'); background-color: #00d; }
-#b2 { background-image: url('img/bx.svg'); background-color: #e00; }
+#b1 { background-image: url('img/b1.svg'); }
+#b2 { background-image: url('img/b2.svg'); }
 #b3 { background-image: url('img/b3.svg'); background-color: #dd0; }
 #b4 { background-image: url('img/b4.svg'); background-color: #0d0; }
 #b5 { background-image: url('img/b5.svg'); }
