@@ -1,5 +1,6 @@
 #detect platform (Windows, Mac or Linux) and do correct window grab
 #eventually clean this up beyond "grab, focus and get pos+size" all in one
+import sys
 from sys import platform
     
 if platform == "linux":
@@ -16,9 +17,12 @@ else: #windows and MAC
 class GrabWindow():
   def __init__(self, window_name):
     self.window_name = window_name
-    return get_window_pos(self.window_name)
+    self.win_x, self.win_y, self.win_w, self.win_h = self._get_window_pos(self.window_name)
 
-  def get_window_pos(window_name):
+  def get_window_pos(self):
+    return (self.win_x, self.win_y, self.win_w, self.win_h)
+
+  def _get_window_pos(self, window_name):
     print("Looking for window: {}".format(window_name))
     if platform == "linux":
       x, y, w, h = (0,0,128,128)

@@ -10,3 +10,4 @@ mss
 python-uinput
 python-xlib
 uvloop
+upnpy

@@ -17,6 +17,9 @@ import av
 from multiprocessing import Process, RawArray
 from easyprocess import EasyProcess
 
+#support UPNP port forwarding
+from upnpportforward import UPNPPortForward
+
 #desktop screenshot support
 from mss import mss
 import PIL
@@ -175,12 +178,15 @@ class VideoImageTrack(VideoStreamTrack):
 
         # "interpret" Shared Buffer Image as numpy array
         #raw_image = np.frombuffer(shared_image_array, np.uint8).reshape(win_w, win_h, 4)
-        raw_image = np.frombuffer(shared_image_array, np.uint8).reshape(win_w, win_h, 3)
+        raw_image = np.frombuffer(shared_image_array, np.uint8).reshape(win_h, win_w, image_depth)
         #img = cv2.imread("/tmp/screenshot.png", cv2.IMREAD_COLOR)
 
         # create video frame
         #frame = av.VideoFrame.from_ndarray(raw_image, format="bgra")
-        frame = av.VideoFrame.from_ndarray(raw_image, format="rgb24")
+        if image_depth == 3:
+          frame = av.VideoFrame.from_ndarray(raw_image, format="rgb24")
+        else:
+          frame = av.VideoFrame.from_ndarray(raw_image, format="bgra")
         frame.pts = pts
         frame.time_base = time_base
         
@@ -386,7 +392,7 @@ async def offer(request):
 
 async def run(web, app, args, ssl_context):
     await asyncio.gather(
-        web._run_app(app, host=args.host, port=args.port, ssl_context=ssl_context)
+        web._run_app(app, host='0.0.0.0', port=args.port, ssl_context=ssl_context)
     )
   
 
@@ -415,10 +421,10 @@ if __name__ == "__main__":
         help="Enable Waitlist and queue size (default: 4 for joysticks, 2 for keyboard)")
     parser.add_argument("--number-of-players", type=int, default=4,
         help="How many controllers to allocate (default: 4 for joysticks, 2 for keyboard)")
-    parser.add_argument("--host", default="0.0.0.0", 
-        help="Host for HTTP server (default: 0.0.0.0)")
     parser.add_argument("--port", type=int, default=8080, 
         help="Port for HTTP server (default: 8080)")
+    parser.add_argument("--disable-port-forwarding", action="store_true",
+        help="Disable UPNP Port forwarding for external access to host")
     parser.add_argument("--verbose", "-v", action="count")
     args = parser.parse_args()
 
@@ -450,19 +456,25 @@ if __name__ == "__main__":
         for event in events:
           jsdev.dev.emit(event, 0)
         jsdev.dev.flush()
+      print("Make sure to export this controller for SDL based games")
+      print("export SDL_GAMECONTROLLERCONFIG='06000000596f6b650000000000000000,Yoke,platform:Linux,a:b0,b:b1,dpup:b2,dpdown:b3,dpleft:b4,dpright:b5,'")
 
     if args.grab_window:
-      win_x, win_y, win_w, win_h = GrabWindow(args.grab-window)
-      shared_image_array = RawArray('B', win_w * win_h * 4)
-      process = Process(target=process_captured_images, 
+      image_depth = 4
+      window = GrabWindow(args.grab_window)
+      win_x, win_y, win_w, win_h = window.get_window_pos()
+      print("Window width: {} height: {}".format(win_w, win_h))
+      shared_image_array = RawArray('B', win_w * win_h * image_depth)
+      process = Process(target=process_capture_images, 
           args=(shared_image_array, (win_x, win_y), (win_w, win_h)))
       process.start()
     else:
+      image_depth = 3
       win_x, win_y, win_w, win_h = (0, 0, 
           int(args.window_size.split(" ")[0]), 
           int(args.window_size.split(" ")[1]))
       #using raw as we don't need to lock the data (pixels may flicker)
-      shared_image_array = RawArray('B', win_w * win_h * 3)
+      shared_image_array = RawArray('B', win_w * win_h * image_depth)
       os.environ["SDL_VIDEODRIVER"]= "dummy"
       os.environ["SDL_VIDEO_DUMMY_SAVE_FRAMES"] = "1"
       os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
@@ -504,6 +516,12 @@ if __name__ == "__main__":
       process = Process(target=process_dumped_images, args=(shared_image_array,))
       process.start()
 
+
+    if not args.disable_port_forwarding:
+      upnp = UPNPPortForward()
+      upnp.forward_port(8080, 'TCP')
+      upnp.forward_port(8080, 'UDP')
+      print("Share URL for remote play: http://{}:8080".format(upnp.get_external_ip()))
 
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
