@@ -26,11 +26,6 @@ import PIL
 from PIL import Image
 import numpy as np
 
-#curl camera link update
-import pycurl
-import re
-import io
-
 #grab window support (for apps launched prior to this server)
 from grabwindow import GrabWindow
 
