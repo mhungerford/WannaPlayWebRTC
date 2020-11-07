@@ -1,6 +1,11 @@
 # Wanna Play WebRTC
 Game streaming platform powered by WebRTC. Allows for desktop games to be shared and played with friends on their desktop browsers or mobile browser (ex: iPhone, Android).
 
+:video_game: :keyboard: :vibration_mode:
+Play it now, live at: [http://wanna.play.ai](http://wanna.play.ai)
+Hosted on Raspberry Pi 4
+:iphone: :computer: :desktop_computer:
+
 ## Mobile Browser (and desktop) support
 Provides an HTML interface with touchscreen gamepad, keyboard support, and low-latency video playback.
 
