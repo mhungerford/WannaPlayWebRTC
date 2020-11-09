@@ -329,7 +329,7 @@ async def offer(request):
                   direction = message[3]
                   key = message[7]
                   dval = 1 if direction == "d" else 0
-                  keys = ['z','x','u','l','d','r']
+                  keys = ['z','x','s','u','l','d','r']
                   kpos = keys.index(key)
                   if getattr(pc, 'js', None) is not None:
                     pc.js.emit(events[kpos], int(dval))
