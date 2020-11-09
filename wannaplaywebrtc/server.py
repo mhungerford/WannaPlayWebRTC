@@ -88,7 +88,7 @@ gameidx = 0
 def jsupdate_vals(js, vals):
   if isinstance(js, yoke.Device):
     for idx, state in enumerate(vals):
-      if (idx != 2 and pico8proc is not None):
+      if (idx != 2):
         js.emit(events[idx], int(state))
       #pico8 hack to use start button to restart pico8 back to main menu
       elif (idx == 2 and int(state) == 1 and pico8proc is not None):
@@ -332,7 +332,14 @@ async def offer(request):
                   keys = ['z','x','s','u','l','d','r']
                   kpos = keys.index(key)
                   if getattr(pc, 'js', None) is not None:
-                    pc.js.emit(events[kpos], int(dval))
+                    if (kpos != 2):
+                      pc.js.emit(events[kpos], int(dval))
+                    #pico8 hack to use start button to restart pico8 back to main menu
+                    elif (kpos == 2 and int(dval) == 1 and pico8proc is not None):
+                      pico8proc.stop()
+                      pico8proc.is_started = False
+                      pico8proc.start()
+
                     pc.js.flush()
               elif isinstance(message, str) and message.startswith("gamectl: switch"):
                   #special game control just for pico-8 (for now)
