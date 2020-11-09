@@ -28,6 +28,9 @@ SDL based games on Linux require the Yoke controller layout below (add to ~.bash
 ## Pico-8 special support
 Pico-8 is a great fantasy console platform with thousands of free retro style games, with up to 4 player joystick support.  Thanks to its 128x128 resolution, it can be encoded in software on a Raspberry Pi without issue and requires little bandwidth.
 
+## UPnP based Peer-to-Peer Server support
+Utilizes UPnP to forward a port from the public internet to the python WebRTC server, allowing peer-to-peer connections 
+
 ## Installation
 This platform was written to be cross-platform, but several features are only tested on Linux.  The included Pico-8 game is only setup to run on Linux (x86_64 and Raspberry Pi).
 
@@ -46,6 +49,9 @@ python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
 ```
 
+## Additional Graphic Resources
+https://openclipart.org/detail/303372/handheld-gaming-consoles
+
 ## Usage considerations and notes
 - Does not work in Heroku or PythonAnywhere due to UDP incoming and outgoing being blocked.
-- 
+

@@ -4,7 +4,7 @@
     <meta name="viewport" content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' />
     <link rel="stylesheet" type="text/css" href="base.css" />
 
-    <title>Web4Player</title>
+    <title>WannaPlay WebRTC</title>
     <style>
     html {
        user-select: none;
@@ -176,6 +176,18 @@
             drop-shadow(0 4px 0 black)
             drop-shadow(-4px 0 0 black)
             drop-shadow(4px 0 0 black);
+    }
+
+    #splashscreen {
+       position: fixed;
+       top: 50%;
+       left: 50%;
+       transform: translate(-50%, -50%);
+       width: 50%;
+       height: 50%;
+       opacity: 1;
+       object-fit: contain;
+       z-index: -100;
     }
 
     #camvideo {
@@ -363,6 +375,8 @@
          }
 
          function start() {
+            document.getElementById('splashscreen').style.display = 'none';
+            document.getElementById('make_url').style.display = 'none';
             document.getElementById('connecting_msg').style.display = 'block';
             displayStartButton(false);
             document.getElementById('stop').style.display = 'inline-block';
@@ -383,6 +397,8 @@
             document.getElementById('video').style.display = 'none';
             document.getElementById('joypad').style.display = 'none';
             document.getElementById('connecting_msg').style.display = 'none';
+            document.getElementById('splashscreen').style.display = 'block';
+            document.getElementById('make_url').style.display = 'block';
             //document.getElementById('camvideo').play();
             document.getElementById('countdown').style.display = "none";
             document.getElementById('player').style.display = "none";
@@ -430,8 +446,10 @@
    <video id="video" autoplay="false" muted playsinline="true" disableRemotePlayback onplaying="gameLoaded();" />
 </div>
 
-<a id="make_url" href="https://makeprojects.com/project/retro-future-remote-play">
-   makeprojects.com/project/retro-future-remote-play
+<img id='splashscreen' src="img/splashscreen.svg" />
+
+<a id="make_url" href="https://github.com/mhungerford/WannaPlayWebRTC">
+   github.com/mhungerford/WannaPlayWebRTC
 </a>
 
    <div id="joypad"/>

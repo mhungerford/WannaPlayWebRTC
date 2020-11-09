@@ -70,6 +70,7 @@ sdlkbdsim = SdlKbdSim()
 events = [
     yoke.EVENTS.BTN_SOUTH,
     yoke.EVENTS.BTN_EAST,
+    yoke.EVENTS.BTN_START,
     yoke.EVENTS.BTN_DPAD_UP,
     yoke.EVENTS.BTN_DPAD_LEFT,
     yoke.EVENTS.BTN_DPAD_DOWN,
@@ -87,7 +88,13 @@ gameidx = 0
 def jsupdate_vals(js, vals):
   if isinstance(js, yoke.Device):
     for idx, state in enumerate(vals):
-      js.emit(events[idx], int(state))
+      if (idx != 2 and pico8proc is not None):
+        js.emit(events[idx], int(state))
+      #pico8 hack to use start button to restart pico8 back to main menu
+      elif (idx == 2 and int(state) == 1 and pico8proc is not None):
+        pico8proc.stop()
+        pico8proc.is_started = False
+        pico8proc.start()
     js.flush()
   elif isinstance(js, str):
     for idx, state in enumerate(vals):
@@ -268,12 +275,7 @@ async def offer(request):
                         print("Assigning joystick:{}".format(jsdev.idx))
                         jslist[jslist.index(jsdev)] = jsdev._replace(locked = True)
                         #trigger to start a direct webrtc video feed (low latency)
-                        if jsdev.idx == 1:
-                          channel.send("start: Player{} (Green)".format(jsdev.idx))
-                        elif jsdev.idx == 2:
-                          channel.send("start: Player{} (Red)".format(jsdev.idx))
-                        else:
-                          channel.send("start: Player{}".format(jsdev.idx))
+                        channel.send("start: Player {}".format(jsdev.idx))
                     else:
                       # if they do have a joystick, and people are waiting
                       if (len(pcs) > len(jslist)):
@@ -463,6 +465,7 @@ if __name__ == "__main__":
       process = Process(target=process_capture_images, 
           args=(shared_image_array, (win_x, win_y), (win_w, win_h)))
       process.start()
+      pico8proc = None
     else:
       image_depth = 3
       win_x, win_y, win_w, win_h = (0, 0, 
@@ -474,28 +477,27 @@ if __name__ == "__main__":
       os.environ["SDL_VIDEO_DUMMY_SAVE_FRAMES"] = "1"
       os.environ["SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"] = "1"
       #need to configure our joystick if using our own pico-8 config
-      os.environ["SDL_GAMECONTROLLERCONFIG"] = "06000000596f6b650000000000000000,Yoke,platform:Linux,a:b0,b:b1,dpup:b2,dpdown:b3,dpleft:b4,dpright:b5,"
+      os.environ["SDL_GAMECONTROLLERCONFIG"] = "06000000596f6b650000000000000000,Yoke,platform:Linux,a:b0,b:b1,start:b2,dpup:b3,dpdown:b4,dpleft:b5,dpright:b6,"
 
       #enable sdl wrapper for sdlkbdsim and other sdl tweaks
       #sdlwrap_lib = 'sdlwrap_{}_{}.so'.format(os.uname().sysname, os.uname().machine)
       #os.environ["LD_PRELOAD"] = str(PROJECT_ROOT / "pico8" / sdlwrap_lib)
-      os.environ["REMOTEKB_PORT"] = "4321"
+      #os.environ["REMOTEKB_PORT"] = "4321"
       #only necessary for arm due to pico-8 forcing non-windowed
       if os.uname().machine == 'armv7l':
         os.environ["LD_LIBRARY_PATH"] = str(PROJECT_ROOT / "pico8")
         os.environ["REMOTEKB_LIBSDL_PATH"] = "/usr/lib/arm-linux-gnueabihf/libSDL2.so"
+      else:
+        os.environ["REMOTEKB_LIBSDL_PATH"] = "/usr/lib/x86_64-linux-gnu/libSDL2-2.0.so.0.8.0"
 
       #move into /tmp/sdl directory to have sdl image dumps there
-      cwd = os.getcwd()
       if not os.path.isdir("/tmp/sdl"):
         os.mkdir("/tmp/sdl")
-      os.chdir("/tmp/sdl")
-
 
       #requires remotekb_wrap in launch for sdlkbdsim use
       pico8_binary = 'runner_{}_{}'.format(os.uname().sysname, os.uname().machine)
       print(str(PROJECT_ROOT / "pico8" / pico8_binary))
-      proc = EasyProcess(
+      pico8proc = EasyProcess(
         str(PROJECT_ROOT / "pico8" / pico8_binary) +
         " -windowed 1" +
         " -width 128" +
@@ -503,10 +505,9 @@ if __name__ == "__main__":
         " -frameless 1" +
         " -volume 0" +
         " -foreground_sleep_ms 20" +
-        " -home /tmp")
-      proc.start()
-
-      os.chdir(cwd)
+        " -home /tmp", 
+        cwd='/tmp/sdl')
+      pico8proc.start()
 
       process = Process(target=process_dumped_images, args=(shared_image_array,))
       process.start()
