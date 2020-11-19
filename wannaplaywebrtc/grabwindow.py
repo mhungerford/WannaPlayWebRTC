@@ -1,11 +1,13 @@
 #detect platform (Windows, Mac or Linux) and do correct window grab
 #eventually clean this up beyond "grab, focus and get pos+size" all in one
 import sys
+import traceback
 from sys import platform
     
 if platform == "linux":
   try:
     import Xlib.display
+    from Xlib import X, Xatom
   except:
     pass
 else: #windows and MAC
@@ -52,8 +54,9 @@ class GrabWindow():
           for window_id in window_ids:
             window = disp.create_resource_object('window', window_id)
             #cannot use get_wm_name, as it errors on certain windows (firefox)
+            #prop = window.get_full_property(Xatom.WM_NAME, 0)
             prop = window.get_full_property(disp.intern_atom('_NET_WM_NAME'), 0)
-            wm_name = getattr(prop, 'value', '')
+            wm_name = getattr(prop, 'value', '').decode('utf-8', errors='ignore')
             if wm_name == window_name:
               return (window, window_id)
 

@@ -1,10 +1,12 @@
 #!/bin/bash
+# exit on error
+set -e
 
 #enable uinput based virtual joysticks
 ./wannaplaywebrtc/yoke/yoke-enable-uinput.sh
 
 #install all ubuntu apt packages
-sed 's/#.*//' apt-packages.txt | xargs sudo apt-get install
+sed 's/#.*//' apt-packages.txt | xargs sudo apt-get -y install
 
 #create local virtualenv
 if [ ! -d venv ]; then

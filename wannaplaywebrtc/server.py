@@ -522,9 +522,9 @@ if __name__ == "__main__":
 
     if not args.disable_port_forwarding:
       upnp = UPNPPortForward()
-      upnp.forward_port(8080, 'TCP')
-      upnp.forward_port(8080, 'UDP')
-      print("Share URL for remote play: http://{}:8080".format(upnp.get_external_ip()))
+      upnp.forward_port(args.port, 'TCP')
+      upnp.forward_port(args.port, 'UDP')
+      print("Share URL for remote play: http://{}:{}".format(upnp.get_external_ip(), args.port))
 
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
