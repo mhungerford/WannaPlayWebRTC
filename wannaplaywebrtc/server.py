@@ -26,6 +26,8 @@ import PIL
 from PIL import Image
 import numpy as np
 
+import cv2
+
 #grab window support (for apps launched prior to this server)
 from grabwindow import GrabWindow
 
@@ -70,7 +72,6 @@ sdlkbdsim = SdlKbdSim()
 events = [
     yoke.EVENTS.BTN_SOUTH,
     yoke.EVENTS.BTN_EAST,
-    yoke.EVENTS.BTN_START,
     yoke.EVENTS.BTN_DPAD_UP,
     yoke.EVENTS.BTN_DPAD_LEFT,
     yoke.EVENTS.BTN_DPAD_DOWN,
@@ -88,13 +89,14 @@ gameidx = 0
 def jsupdate_vals(js, vals):
   if isinstance(js, yoke.Device):
     for idx, state in enumerate(vals):
-      if (idx != 2):
-        js.emit(events[idx], int(state))
+      js.emit(events[idx], int(state))
+      #if (idx != 2):
+      #  js.emit(events[idx], int(state))
       #pico8 hack to use start button to restart pico8 back to main menu
-      elif (idx == 2 and int(state) == 1 and pico8proc is not None):
-        pico8proc.stop()
-        pico8proc.is_started = False
-        pico8proc.start()
+      #elif (idx == 2 and int(state) == 1 and pico8proc is not None):
+      #  pico8proc.stop()
+      #  pico8proc.is_started = False
+      #  pico8proc.start()
     js.flush()
   elif isinstance(js, str):
     for idx, state in enumerate(vals):
@@ -155,6 +157,7 @@ def process_capture_images(shared_image_array,
     # Grab the data
     sct_img = sct.grab(monitor)
     img_np = np.array(sct_img)
+    img_np = cv2.resize(img_np, dsize=(640, 360), interpolation=cv2.INTER_LINEAR) #NEAREST)
     # "interpret" buffer as numpy array
     img_wrap = np.frombuffer(shared_image_array, img_np.dtype).reshape(img_np.shape)
     np.copyto(img_wrap, img_np)
@@ -180,7 +183,7 @@ class VideoImageTrack(VideoStreamTrack):
 
         # "interpret" Shared Buffer Image as numpy array
         #raw_image = np.frombuffer(shared_image_array, np.uint8).reshape(win_w, win_h, 4)
-        raw_image = np.frombuffer(shared_image_array, np.uint8).reshape(win_h, win_w, image_depth)
+        raw_image = np.frombuffer(shared_image_array, np.uint8).reshape(360, 640, image_depth)
         #img = cv2.imread("/tmp/screenshot.png", cv2.IMREAD_COLOR)
 
         # create video frame
@@ -332,13 +335,14 @@ async def offer(request):
                   keys = ['z','x','s','u','l','d','r']
                   kpos = keys.index(key)
                   if getattr(pc, 'js', None) is not None:
-                    if (kpos != 2):
-                      pc.js.emit(events[kpos], int(dval))
+                    pc.js.emit(events[kpos], int(dval))
+                    #if (kpos != 2):
+                    #  pc.js.emit(events[kpos], int(dval))
                     #pico8 hack to use start button to restart pico8 back to main menu
-                    elif (kpos == 2 and int(dval) == 1 and pico8proc is not None):
-                      pico8proc.stop()
-                      pico8proc.is_started = False
-                      pico8proc.start()
+                    #elif (kpos == 2 and int(dval) == 1 and pico8proc is not None):
+                    #  pico8proc.stop()
+                    #  pico8proc.is_started = False
+                    #  pico8proc.start()
 
                     pc.js.flush()
               elif isinstance(message, str) and message.startswith("gamectl: switch"):
@@ -468,7 +472,7 @@ if __name__ == "__main__":
       window = GrabWindow(args.grab_window)
       win_x, win_y, win_w, win_h = window.get_window_pos()
       print("Window width: {} height: {}".format(win_w, win_h))
-      shared_image_array = RawArray('B', win_w * win_h * image_depth)
+      shared_image_array = RawArray('B', 640 * 360 * image_depth) #win_w * win_h * image_depth)
       process = Process(target=process_capture_images, 
           args=(shared_image_array, (win_x, win_y), (win_w, win_h)))
       process.start()

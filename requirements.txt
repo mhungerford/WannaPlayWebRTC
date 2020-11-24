@@ -11,3 +11,4 @@ python-uinput
 python-xlib
 uvloop
 upnpy
+opencv-python
